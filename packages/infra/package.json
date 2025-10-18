@@ -1,0 +1,19 @@
+{
+  "name": "@repo/infra",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch"
+  },
+  "devDependencies": {
+    "@repo/core": "workspace:*",
+    "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "@repo/infra": "link:"
+  }
+}

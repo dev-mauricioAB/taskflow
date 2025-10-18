@@ -1,135 +1,144 @@
-# Turborepo starter
+# TaskFlow
 
-This Turborepo starter is maintained by the Turborepo core team.
+TaskFlow is a **monorepo productivity platform** built with **Next.js**, **Node.js**, and **Turborepo** — designed to practice **Clean Architecture**, **SOLID principles**, and **scalable system design**.
 
-## Using this example
+The goal is to simulate a real-world SaaS ecosystem, including authentication, task management, team collaboration, analytics, and integrations.
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
-```
+## 🚀 Tech Stack
 
-## What's inside?
+### Frontend
+- **Next.js (App Router)** with TypeScript  
+- **React Query / TanStack Query** for server state  
+- **Zustand** for local state management  
+- **TailwindCSS + ShadCN/UI** for styling  
+- **SCI Charts** for analytics dashboards  
 
-This Turborepo includes the following packages/apps:
+### Backend
+- **Node.js + Express / NestJS-style Clean Architecture**  
+- **Prisma ORM** with **MySQL**  
+- **Zod** for schema validation  
+- **JWT-based authentication**  
+- **Docker** for environment setup  
 
-### Apps and Packages
+### DevOps / Monorepo
+- **Turborepo** for task and dependency orchestration  
+- **Docker Compose** for running backend, frontend, and database  
+- **ESLint + Prettier** for linting and formatting  
+- **Husky + Lint-Staged** for git hooks  
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## 🧠 Architecture Overview
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+This project follows **Clean Architecture** principles:
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+/apps
+  /web              → Next.js frontend
+  /api              → Node.js backend API
+/packages
+  /core             → Domain entities, use-cases, interfaces
+  /ui               → Shared UI components
+  /utils            → Shared helpers & types
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### Layers
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+| Layer | Description |
+|-------|--------------|
+| **Entities** | Core business logic and domain models |
+| **Use Cases** | Application-specific business rules |
+| **Infrastructure** | Database, API, external services |
+| **Presentation** | UI components and pages |
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+---
 
-### Develop
+## 🧩 Features
 
-To develop all apps and packages, run the following command:
+✅ Authentication (Sign up / Login / Forgot Password)  
+✅ Team & User management  
+✅ Task CRUD with tagging and filtering  
+✅ Real-time notifications (WebSockets)  
+✅ Analytics dashboards (task progress, velocity)  
+✅ Commenting and collaboration per task  
+✅ Audit logs and activity timeline  
+✅ Dockerized full environment (API + Web + MySQL)  
+✅ Unit and integration tests  
 
-```
-cd my-turborepo
+---
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+## 🐳 Running Locally with Docker
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+### 1️⃣ Clone the repo
+```bash
+git clone https://github.com/dev-mauricioAB/taskflow.git
+cd taskflow
 ```
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+### 2️⃣ Build and start containers
+```bash
+docker-compose up --build
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+### 3️⃣ Run migrations
+```bash
+docker exec -it taskflow-api npx prisma migrate deploy
 ```
 
-## Useful Links
+### 4️⃣ Access the app
+- Frontend → [http://localhost:3000](http://localhost:3000)
+- API → [http://localhost:4000](http://localhost:4000)
+- MySQL → `localhost:3306`
 
-Learn more about the power of Turborepo:
+---
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## 🧪 Testing
+
+### Run all tests
+```bash
+turbo run test
+```
+
+### Run lint check
+```bash
+turbo run lint
+```
+
+---
+
+## 🧱 Project Backlog (High-Level)
+
+1. **Monorepo Setup**
+   - Initialize Turborepo
+   - Setup base apps (`web`, `api`) and shared packages
+2. **Backend Architecture**
+   - Configure Express + Clean Architecture structure
+   - Setup Prisma, migrations, and database models
+   - Implement Auth (JWT + refresh)
+3. **Frontend Setup**
+   - Initialize Next.js app
+   - Configure Tailwind, ShadCN, and Zustand
+   - Add auth pages and protected routes
+4. **Core Features**
+   - Task CRUD
+   - Teams and collaboration
+   - Real-time notifications (Socket.IO)
+   - Analytics dashboard
+5. **DevOps / Tooling**
+   - Docker Compose setup
+   - ESLint, Prettier, Husky
+   - CI/CD (optional)
+
+---
+
+## 📘 License
+
+This project is under the **MIT License**.  
+Feel free to fork, modify, and learn!
+
+---
+
+**Author:** [Maurício Alexandre Barroso](https://github.com/dev-mauricioAB)  
+💡 Practicing advanced frontend and backend architecture in a real-world context.
