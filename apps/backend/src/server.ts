@@ -1,7 +1,12 @@
-import { app } from "./app";
+import express from "express";
+import { connectDb } from "./config/database.config";
+import { serverConfig } from "./config/server.config";
 
-const PORT = process.env.PORT || 4000;
+const app = express();
+app.use(express.json());
 
-app.listen(PORT, () => {
-  console.log(`🚀 TaskFlow API running on port ${PORT}`);
+connectDb();
+
+app.listen(serverConfig.port, () => {
+  console.log(`🚀 Server running on port ${serverConfig.port}`);
 });

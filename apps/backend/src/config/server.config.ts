@@ -1,6 +1,9 @@
-import { ENV } from "./env";
+import { env } from "./env";
 
-export const SERVER_CONFIG = {
-  port: ENV.PORT,
-  host: "0.0.0.0",
+export const serverConfig = {
+  port: Number(env.PORT) || 8080,
+  nodeEnv: env.NODE_ENV,
+  isDevelopment: env.NODE_ENV === "development",
+  isProduction: env.NODE_ENV === "production",
+  isTest: env.NODE_ENV === "test",
 };

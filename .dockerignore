@@ -1,0 +1,26 @@
+# Dependencies
+**/node_modules
+**/.turbo
+**/.next
+**/dist
+**/out
+
+# Version control and IDE stuff
+.git
+.gitignore
+.vscode
+.idea
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs and temp
+**/*.log
+**/tmp
+**/coverage
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml

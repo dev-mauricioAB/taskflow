@@ -1,7 +1,5 @@
-// packages/infrastructure/prisma/schema.prisma
-
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -10,7 +8,7 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) // UUID primary key
   name      String
   email     String   @unique
   tasks     Task[]
@@ -19,7 +17,7 @@ model User {
 }
 
 model Task {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) // UUID primary key
   title       String
   description String?
   status      String   @default("todo")

@@ -1,9 +1,24 @@
+import { z } from "zod";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-export const ENV = {
-  NODE_ENV: process.env.NODE_ENV || "development",
-  PORT: process.env.PORT ? Number(process.env.PORT) : 3000,
-  DATABASE_URL: process.env.DATABASE_URL || "mysql://root:password@localhost:3306/taskflow",
-};
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  DATABASE_URL: z.string().url(),
+  POSTGRES_USER: z.string(),
+  POSTGRES_PASSWORD: z.string(),
+  POSTGRES_HOST: z.string(),
+  POSTGRES_PORT: z.string().default("5432"),
+  POSTGRES_DB: z.string(),
+  PORT: z.string().default("8080"),
+});
+
+const _env = envSchema.safeParse(process.env);
+
+if (!_env.success) {
+  console.error("❌ Invalid environment variables:", _env.error.format());
+  process.exit(1);
+}
+
+export const env = _env.data;

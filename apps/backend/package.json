@@ -8,18 +8,17 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@repo/core": "workspace:*",
-    "@repo/infra": "workspace:*",
+    "@repo/core": "*",
+    "@repo/infra": "*",
     "@prisma/client": "^6.17.1",
-    "backend": "link:",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "prisma": "^6.17.1",

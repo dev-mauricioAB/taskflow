@@ -9,11 +9,10 @@
     "dev": "tsc -b --watch"
   },
   "devDependencies": {
-    "@repo/core": "workspace:*",
+    "@repo/core": "*",
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0",
-    "@repo/infra": "link:"
+    "@prisma/client": "^5.0.0"
   }
 }
