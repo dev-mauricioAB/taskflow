@@ -3,14 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "main": "dist/index.js",
-   "exports": {
-    "./*": "./src/*.ts"
-  },
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc -b --watch"
   },
-  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.4.0"
   }

@@ -5,12 +5,7 @@ dotenv.config();
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  DATABASE_URL: z.string().url(),
-  POSTGRES_USER: z.string(),
-  POSTGRES_PASSWORD: z.string(),
-  POSTGRES_HOST: z.string(),
-  POSTGRES_PORT: z.string().default("5432"),
-  POSTGRES_DB: z.string(),
+  DATABASE_URL: z.url(),
   PORT: z.string().default("8080"),
 });
 

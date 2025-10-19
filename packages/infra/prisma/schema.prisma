@@ -5,6 +5,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -17,12 +18,18 @@ model User {
 }
 
 model Task {
-  id          String   @id @default(uuid()) // UUID primary key
+  id          String     @id @default(uuid()) // UUID primary key
   title       String
   description String?
-  status      String   @default("todo")
+  status      TaskStatus @default(todo)
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  user        User       @relation(fields: [userId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+enum TaskStatus {
+  todo
+  inProgress
+  done
 }
