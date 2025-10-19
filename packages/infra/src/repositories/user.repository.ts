@@ -1,4 +1,4 @@
-import { User } from "@core/entities/user.entity";
+import { User } from "@repo/core";
 import { prisma } from "../database/prisma.client";
 
 export class UserRepository {

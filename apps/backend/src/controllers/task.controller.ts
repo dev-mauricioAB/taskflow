@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { CreateTaskUseCase } from "@repo/core/src/use-cases/create-task.usecase";
-import { TaskRepository } from "@repo/infra/src/repositories/task.repository";
+import { CreateTaskUseCase } from "@repo/core";
+import { TaskRepository } from "@repo/infra";
 
 export class TaskController {
   private taskRepo = new TaskRepository();

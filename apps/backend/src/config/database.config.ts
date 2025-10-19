@@ -1,4 +1,4 @@
-import { prisma } from "@repo/infra/src";
+import { prisma } from "@repo/infra";
 
 export const connectDb = async () => {
   try {

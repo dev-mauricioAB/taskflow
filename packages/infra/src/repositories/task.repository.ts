@@ -1,4 +1,4 @@
-import { Task } from "@core/entities/task.entity";
+import { Task } from "@repo/core";
 import { prisma } from "../database/prisma.client";
 
 export class TaskRepository {

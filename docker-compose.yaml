@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-      target: final
+      target: runner
     volumes:
       - ./apps/api:/usr/src/app/apps/api
       - ./node_modules:/usr/src/app/node_modules
@@ -34,7 +34,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: yarn dev
 
 volumes:
   db-data:

@@ -1,73 +1,88 @@
-# ===========================
-#  Stage 1: Base
-# ===========================
+# -------------------------------
+# 🌱 BASE IMAGE
+# -------------------------------
+# Use the lightweight Node.js image as the base for all stages.
+# 'slim' keeps the image smaller but requires us to manually install dependencies like OpenSSL.
 FROM node:22-slim AS base
+
+# -------------------------------
+# 🏗️ BUILDER STAGE
+# -------------------------------
+# This stage handles pruning the monorepo using TurboRepo.
+# It copies the full repo, installs Turbo, and prunes everything
+# that’s not needed to build the backend (and its dependencies).
+FROM base AS builder
+
+# Install libc (required for Prisma’s native engine)
+RUN apt-get update && apt-get install -y libc6 && rm -rf /var/lib/apt/lists/*
+
+# Define working directory
 WORKDIR /app
 
-# Install build tools
-RUN apt-get update && apt-get install -y python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
+# Install Turbo globally (used to build and prune workspaces)
+RUN yarn global add turbo
 
-ENV NODE_ENV=production
+# Copy entire monorepo into the container
+COPY . .
 
-# ===========================
-#  Stage 2: Prune monorepo for backend
-# ===========================
-FROM base AS pruner
+# 🧹 Prune only what's necessary for the backend app and its dependencies
+RUN turbo prune backend --docker
 
-# Install Turbo globally
-RUN npm install -g turbo
-
-# Copy only manifests and turbo config files
-COPY turbo.json package.json package-lock.json ./
-COPY apps/backend/package.json ./apps/backend/
-COPY packages/*/package.json ./packages/*/
-
-# Prune dependencies for backend only
-RUN turbo prune --scope=backend --docker
-
-# ===========================
-#  Stage 3: Install dependencies
-# ===========================
+# -------------------------------
+# 📦 INSTALLER STAGE
+# -------------------------------
+# This stage installs dependencies, generates the Prisma client,
+# and builds the backend (and its shared packages).
 FROM base AS installer
 WORKDIR /app
 
-# Copy pruned JSON + full pruned source (local packages included)
-COPY --from=pruner /app/out/json/ ./
-COPY --from=pruner /app/out/full/ ./
+# Install system-level dependencies required by Prisma
+# - openssl + libssl-dev: required for Prisma query engine binaries
+# - libc6: required for Node.js runtime and native modules
+RUN apt-get update && apt-get install -y libc6 openssl libssl-dev && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies using npm (local packages now exist)
-RUN npm ci
+# Copy pruned package manifests (only package.json, lockfiles, etc.)
+COPY --from=builder /app/out/json/ .
 
-# ===========================
-#  Stage 4: Build backend
-# ===========================
-FROM base AS builder
+# 🧩 Install dependencies for backend and all referenced workspaces (e.g., @repo/infra)
+RUN yarn install --frozen-lockfile
+
+# Copy actual source code for backend and its dependencies
+COPY --from=builder /app/out/full/ .
+
+# -----------------------------------
+# ⚙️ GENERATE PRISMA CLIENT (infra)
+# -----------------------------------
+# Prisma is located in packages/infra, so we move there before generating.
+# This step ensures @prisma/client is built and available at runtime.
+WORKDIR /app/packages/infra
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Return to project root
 WORKDIR /app
 
-# Copy installed node_modules + full source
-COPY --from=installer /app ./
+# 🧱 Build backend and its dependencies using Turbo
+RUN yarn turbo run build --filter=backend...
 
-# Build backend only
-RUN npx turbo run build --filter=backend...
-
-# ===========================
-#  Stage 5: Final runtime
-# ===========================
-FROM node:22-slim AS final
+# -------------------------------
+# 🚀 RUNNER STAGE
+# -------------------------------
+# This stage creates the final, lightweight runtime image.
+FROM base AS runner
 WORKDIR /app
 
-# Optional: non-root user
-RUN useradd -m backenduser
-USER backenduser
+# Install runtime-only dependencies for Prisma (no build tools)
+RUN apt-get update && apt-get install -y openssl libssl-dev && rm -rf /var/lib/apt/lists/*
 
-# Copy built app and production dependencies
-COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-COPY --from=installer /app/node_modules ./node_modules
-COPY --from=installer /app/package.json ./
+# Copy everything from installer (includes node_modules + built dist files)
+COPY --from=installer /app .
 
-# Expose backend port
-EXPOSE 4000
+# 👤 Create a non-root user for better container security
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
+USER nodejs
 
-# Start backend
-CMD ["node", "apps/backend/dist/index.js"]
+# -------------------------------
+# 🏁 START COMMAND
+# -------------------------------
+# Run the compiled backend application
+CMD ["node", "apps/backend/dist/server.js"]

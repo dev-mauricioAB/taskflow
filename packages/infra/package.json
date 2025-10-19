@@ -2,16 +2,23 @@
   "name": "@repo/infra",
   "version": "0.1.0",
   "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc -b --watch",
-    "db:generate": "prisma generate",
+    "db:generate": "prisma generate --schema=./prisma/schema.prisma",
     "db:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "prisma": "^5.21.1",
+    "@prisma/client": "^5.21.1"
   },
   "devDependencies": {
     "@repo/core": "*",
-    "typescript": "5.9.2",
-    "prisma": "^5.21.1",
-    "@prisma/client": "^5.21.1"
+    "typescript": "5.9.2"
+  },
+  "prisma": {
+    "schema": "./prisma/schema.prisma"
   }
 }

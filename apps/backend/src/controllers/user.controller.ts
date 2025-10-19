@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { CreateUserUseCase } from "@repo/core/src/use-cases/create-user.usecase";
-import { UserRepository } from "@repo/infra/src/repositories/user.repository";
+import { CreateUserUseCase } from "@repo/core";
+import { UserRepository } from "@repo/infra";
 
 export class UserController {
   private userRepo = new UserRepository();
