@@ -4,7 +4,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
   DATABASE_URL: z.url(),
   PORT: z.string().default("8080"),
 });

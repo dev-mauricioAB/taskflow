@@ -9,6 +9,7 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "@tanstack/eslint-plugin-query": "^5.91.2",
     "prettier": "^3.6.2",
     "turbo": "^2.5.8",
     "typescript": "5.9.2"
@@ -20,5 +21,9 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@tanstack/query-core": "^5.90.5",
+    "@tanstack/react-query": "^5.90.5"
+  }
 }

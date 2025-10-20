@@ -5,7 +5,7 @@ export class CreateTaskUseCase {
     return {
       id: crypto.randomUUID(),
       ...data,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
   }
 }

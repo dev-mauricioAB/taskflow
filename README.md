@@ -9,24 +9,27 @@ The goal is to simulate a real-world SaaS ecosystem, including authentication, t
 ## 🚀 Tech Stack
 
 ### Frontend
-- **Next.js (App Router)** with TypeScript  
-- **React Query / TanStack Query** for server state  
-- **Zustand** for local state management  
-- **TailwindCSS + ShadCN/UI** for styling  
-- **SCI Charts** for analytics dashboards  
+
+- **Next.js (App Router)** with TypeScript
+- **React Query / TanStack Query** for server state
+- **Zustand** for local state management
+- **TailwindCSS + ShadCN/UI** for styling
+- **SCI Charts** for analytics dashboards
 
 ### Backend
-- **Node.js + Express / NestJS-style Clean Architecture**  
-- **Prisma ORM** with **MySQL**  
-- **Zod** for schema validation  
-- **JWT-based authentication**  
-- **Docker** for environment setup  
+
+- **Node.js + Express / NestJS-style Clean Architecture**
+- **Prisma ORM** with **MySQL**
+- **Zod** for schema validation
+- **JWT-based authentication**
+- **Docker** for environment setup
 
 ### DevOps / Monorepo
-- **Turborepo** for task and dependency orchestration  
-- **Docker Compose** for running backend, frontend, and database  
-- **ESLint + Prettier** for linting and formatting  
-- **Husky + Lint-Staged** for git hooks  
+
+- **Turborepo** for task and dependency orchestration
+- **Docker Compose** for running backend, frontend, and database
+- **ESLint + Prettier** for linting and formatting
+- **Husky + Lint-Staged** for git hooks
 
 ---
 
@@ -46,12 +49,12 @@ This project follows **Clean Architecture** principles:
 
 ### Layers
 
-| Layer | Description |
-|-------|--------------|
-| **Entities** | Core business logic and domain models |
-| **Use Cases** | Application-specific business rules |
-| **Infrastructure** | Database, API, external services |
-| **Presentation** | UI components and pages |
+| Layer              | Description                           |
+| ------------------ | ------------------------------------- |
+| **Entities**       | Core business logic and domain models |
+| **Use Cases**      | Application-specific business rules   |
+| **Infrastructure** | Database, API, external services      |
+| **Presentation**   | UI components and pages               |
 
 ---
 
@@ -65,29 +68,33 @@ This project follows **Clean Architecture** principles:
 ✅ Commenting and collaboration per task  
 ✅ Audit logs and activity timeline  
 ✅ Dockerized full environment (API + Web + MySQL)  
-✅ Unit and integration tests  
+✅ Unit and integration tests
 
 ---
 
 ## 🐳 Running Locally with Docker
 
 ### 1️⃣ Clone the repo
+
 ```bash
 git clone https://github.com/dev-mauricioAB/taskflow.git
 cd taskflow
 ```
 
 ### 2️⃣ Build and start containers
+
 ```bash
 docker-compose up --build
 ```
 
 ### 3️⃣ Run migrations
+
 ```bash
 docker exec -it taskflow-api npx prisma migrate deploy
 ```
 
 ### 4️⃣ Access the app
+
 - Frontend → [http://localhost:3000](http://localhost:3000)
 - API → [http://localhost:4000](http://localhost:4000)
 - MySQL → `localhost:3306`
@@ -97,11 +104,13 @@ docker exec -it taskflow-api npx prisma migrate deploy
 ## 🧪 Testing
 
 ### Run all tests
+
 ```bash
 turbo run test
 ```
 
 ### Run lint check
+
 ```bash
 turbo run lint
 ```
