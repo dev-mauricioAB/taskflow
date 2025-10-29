@@ -1,88 +1,77 @@
-# -------------------------------
-# 🌱 BASE IMAGE
-# -------------------------------
-# Use the lightweight Node.js image as the base for all stages.
-# 'slim' keeps the image smaller but requires us to manually install dependencies like OpenSSL.
-FROM node:22-slim AS base
+# syntax=docker/dockerfile:1.5.2
 
-# -------------------------------
-# 🏗️ BUILDER STAGE
-# -------------------------------
-# This stage handles pruning the monorepo using TurboRepo.
-# It copies the full repo, installs Turbo, and prunes everything
-# that’s not needed to build the backend (and its dependencies).
-FROM base AS builder
+# ---- Base (with turbo) ----
+FROM node:20-bookworm-slim AS base
+WORKDIR /repo
+ENV NODE_ENV=production
+# Turbo for prune/build orchestration
+RUN npm i -g turbo
 
-# Install libc (required for Prisma’s native engine)
-RUN apt-get update && apt-get install -y libc6 && rm -rf /var/lib/apt/lists/*
-
-# Define working directory
-WORKDIR /app
-
-# Install Turbo globally (used to build and prune workspaces)
-RUN yarn global add turbo
-
-# Copy entire monorepo into the container
+# Copy the full repo and prune to just what's needed for backend
 COPY . .
+RUN turbo prune --scope=backend --docker
 
-# 🧹 Prune only what's necessary for the backend app and its dependencies
-RUN turbo prune backend --docker
+# ---- Dependencies ----
+FROM node:20-bookworm-slim AS deps
+WORKDIR /repo
 
-# -------------------------------
-# 📦 INSTALLER STAGE
-# -------------------------------
-# This stage installs dependencies, generates the Prisma client,
-# and builds the backend (and its shared packages).
-FROM base AS installer
-WORKDIR /app
+# Bring pruned package manifests and lockfile
+COPY --from=base /repo/out/json/ .
+COPY --from=base /repo/out/yarn.lock ./yarn.lock
 
-# Install system-level dependencies required by Prisma
-# - openssl + libssl-dev: required for Prisma query engine binaries
-# - libc6: required for Node.js runtime and native modules
-RUN apt-get update && apt-get install -y libc6 openssl libssl-dev && rm -rf /var/lib/apt/lists/*
+# Ensure Yarn is available and version-matched via Corepack
+RUN corepack enable
 
-# Copy pruned package manifests (only package.json, lockfiles, etc.)
-COPY --from=builder /app/out/json/ .
+# Install dependencies for the pruned graph with modern Yarn flags
+RUN yarn install --immutable --immutable-cache
 
-# 🧩 Install dependencies for backend and all referenced workspaces (e.g., @repo/infra)
-RUN yarn install --frozen-lockfile
+# ---- Build ----
+FROM node:20-bookworm-slim AS build
+WORKDIR /repo
 
-# Copy actual source code for backend and its dependencies
-COPY --from=builder /app/out/full/ .
+# Bring node_modules from deps and pruned source from base
+COPY --from=deps /repo .
+COPY --from=base /repo/out/full/ .
 
-# -----------------------------------
-# ⚙️ GENERATE PRISMA CLIENT (infra)
-# -----------------------------------
-# Prisma is located in packages/infra, so we move there before generating.
-# This step ensures @prisma/client is built and available at runtime.
-WORKDIR /app/packages/infra
+ENV NODE_ENV=production
+
+# Generate Prisma Client inside the infra workspace (shared instance)
+WORKDIR /repo/packages/infra
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
-# Return to project root
+# Build backend and its workspace deps
+WORKDIR /repo
+RUN yarn run turbo run build --filter=backend...
+
+# ---- Runtime ----
+FROM node:20-bookworm-slim AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 
-# 🧱 Build backend and its dependencies using Turbo
-RUN yarn turbo run build --filter=backend...
+# Install OpenSSL 3 runtime libraries
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libssl3 ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
-# -------------------------------
-# 🚀 RUNNER STAGE
-# -------------------------------
-# This stage creates the final, lightweight runtime image.
-FROM base AS runner
-WORKDIR /app
+# Create non-root user
+RUN addgroup --system nodegrp && adduser --system --ingroup nodegrp nodeusr
 
-# Install runtime-only dependencies for Prisma (no build tools)
-RUN apt-get update && apt-get install -y openssl libssl-dev && rm -rf /var/lib/apt/lists/*
+# Copy backend compiled output
+COPY --from=build /repo/apps/backend/package.json ./apps/backend/package.json
+COPY --from=build /repo/apps/backend/dist ./apps/backend/dist
 
-# Copy everything from installer (includes node_modules + built dist files)
-COPY --from=installer /app .
+# Copy shared package outputs used at runtime
+COPY --from=build /repo/packages/core/package.json ./packages/core/package.json
+COPY --from=build /repo/packages/core/dist ./packages/core/dist
+COPY --from=build /repo/packages/infra/package.json ./packages/infra/package.json
+COPY --from=build /repo/packages/infra/dist ./packages/infra/dist
+# Optional: include schema directory if desired
+COPY --from=build /repo/packages/infra/prisma ./packages/infra/prisma
 
-# 👤 Create a non-root user for better container security
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
-USER nodejs
+# Copy node_modules including generated Prisma client and engines
+COPY --from=build /repo/node_modules ./node_modules
+COPY --from=build /repo/apps/backend/node_modules ./apps/backend/node_modules
 
-# -------------------------------
-# 🏁 START COMMAND
-# -------------------------------
-# Run the compiled backend application
+USER nodeusr
+EXPOSE 8080
 CMD ["node", "apps/backend/dist/server.js"]

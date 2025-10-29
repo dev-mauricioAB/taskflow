@@ -1,73 +1,58 @@
-# =========================
-# 🏗️ Base stage
-# =========================
-# Use a lightweight Node 22 base image for all subsequent stages
-FROM node:22-slim AS base
+# syntax=docker/dockerfile:1.5.2
 
-# Set working directory for the app
-WORKDIR /app
+# ---- Base with turbo ----
+FROM node:20-alpine AS base
+WORKDIR /repo
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm i -g turbo
 
-
-# =========================
-# 🧩 Pruner stage
-# =========================
-# Turbo Prune will copy only the necessary files to build the selected app (web)
-FROM base AS pruner
-
-# Install turbo globally to use `turbo prune`
-RUN yarn global add turbo
-
-# Copy the entire monorepo
+# Copy monorepo and prune to web scope
 COPY . .
-
-# Prune dependencies for only the web app and its dependencies
-# This drastically reduces image size and build time
 RUN turbo prune --scope=web --docker
 
+# ---- Dependencies ----
+FROM node:20-alpine AS deps
+WORKDIR /repo
+COPY --from=base /repo/out/json/ .
+COPY --from=base /repo/out/yarn.lock ./yarn.lock
+RUN yarn install --frozen-lockfile --prefer-offline
 
-# =========================
-# 🧱 Builder stage
-# =========================
-FROM base AS builder
+# ---- Build ----
+FROM node:20-alpine AS build
+WORKDIR /repo
+COPY --from=deps /repo .
+COPY --from=base /repo/out/full/ .
 
-# Install system dependencies needed by some Node packages
-RUN apt-get update && apt-get install -y libc6 && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Set working directory
-WORKDIR /app
-
-# Copy pruned files from the previous stage
-# (Only what’s needed to build "web" will be included)
-COPY --from=pruner /app/out/json/ ./
-COPY --from=pruner /app/out/yarn.lock ./yarn.lock
-COPY --from=pruner /app/out/full/ ./
-
-# Install dependencies (frozen-lockfile ensures reproducibility)
-RUN yarn install --frozen-lockfile
-
-# Build the web app using Turborepo pipeline
+# Ensure standalone output
+# If you added output:'standalone' to next.config.mjs, this will generate .next/standalone
 RUN yarn turbo run build --filter=web...
 
-# =========================
-# 🚀 Runner stage
-# =========================
-FROM base AS runner
-
-# Set NODE_ENV to production for optimized runtime
-ENV NODE_ENV=production
-
-# Create working directory for runtime
+# ---- Runtime ----
+FROM node:20-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy only necessary runtime files from builder
-COPY --from=builder /app/apps/web/next.config.mjs ./
-COPY --from=builder /app/apps/web/public ./public
-COPY --from=builder /app/apps/web/.next ./.next
-COPY --from=builder /app/apps/web/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
+# Non-root user
+RUN addgroup -S nodegrp && adduser -S nodeusr -G nodegrp
 
-# Expose Next.js default port
+# Copy public assets
+COPY --from=build /repo/apps/web/public ./public
+
+# Copy standalone server and static assets
+# Note: Next writes .next/standalone with the workspace path inside it.
+# The standalone folder contains a full app tree with a server.js entry at the app root inside that tree.
+COPY --from=build --chown=nodeusr:nodegrp /repo/apps/web/.next/standalone ./standalone
+COPY --from=build --chown=nodeusr:nodegrp /repo/apps/web/.next/static ./.next/static
+
+USER nodeusr
 EXPOSE 3000
+ENV PORT=3000
 
-# Start Next.js directly using the binary to avoid missing "start" script issues
-CMD ["node", "node_modules/next/dist/bin/next", "start", "-p", "3000"]
+# Start the standalone server entry. The server.js lives under the workspace subfolder within standalone.
+# For a workspace at apps/web, the entry is: standalone/apps/web/server.js
+CMD ["node", "standalone/apps/web/server.js"]
