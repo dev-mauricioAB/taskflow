@@ -1,11 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { QUERY_KEYS, ApiResponse } from "@infra/query/types";
-import { User } from "@core/entities/user.entity";
+import { QUERY_KEYS, ApiResponse, User } from "@repo/shared";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
 
 export const useUsers = () => {
   return useQuery<ApiResponse<User[]>>({

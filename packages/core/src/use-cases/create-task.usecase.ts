@@ -1,4 +1,4 @@
-import { Task } from "../entities/task.entity";
+import { Task } from "@repo/shared";
 
 export class CreateTaskUseCase {
   execute(data: Omit<Task, "id" | "createdAt" | "updatedAt">): Task {

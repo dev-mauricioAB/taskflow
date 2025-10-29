@@ -1,5 +1,5 @@
-import { User } from "@repo/core";
 import { prisma } from "../database/prisma.client";
+import { User } from "@repo/shared";
 
 export class UserRepository {
   async create(user: User): Promise<User> {

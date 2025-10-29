@@ -1,5 +1,5 @@
-import { Task } from "@repo/core";
 import { prisma } from "../database/prisma.client";
+import { Task } from "@repo/shared";
 
 export class TaskRepository {
   async create(task: Task): Promise<Task> {

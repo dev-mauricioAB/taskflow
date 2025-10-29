@@ -5,8 +5,4 @@
     "outDir": "dist",
   },
   "include": ["src"],
-  "references": [
-    { "path": "../../packages/core" },
-    { "path": "../../packages/infra" }
-  ]
 }

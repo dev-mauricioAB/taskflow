@@ -1,4 +1,4 @@
-import { User } from "../entities/user.entity";
+import { User } from '@repo/shared';
 
 export class CreateUserUseCase {
   execute(data: Omit<User, "id" | "createdAt" | "updatedAt">): User {

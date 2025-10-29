@@ -15,11 +15,5 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022",
-    "paths": {
-      "@core/*": ["../core/src/*"],
-      "@infra/*": ["../infra/src/*"],
-      "@ui/*": ["../ui/src/*"],
-      "@config/*": ["../config/src/*"]
-    }
   }
 }

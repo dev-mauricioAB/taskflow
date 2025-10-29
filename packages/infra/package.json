@@ -15,7 +15,7 @@
     "@prisma/client": "^5.21.1"
   },
   "devDependencies": {
-    "@repo/core": "*",
+    "@repo/shared": "*",
     "typescript": "5.9.2"
   },
   "prisma": {
