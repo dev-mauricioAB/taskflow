@@ -3,5 +3,5 @@ export interface User {
   name: string;
   email: string;
   createdAt: Date;
-  updatedAt?: Date;
+  updatedAt?: Date; // set by DB via prisma @updatedAt
 }
