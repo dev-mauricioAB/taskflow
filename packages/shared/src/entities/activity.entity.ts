@@ -1,4 +1,5 @@
-export type ActivityType = "created" | "updated" | "status_changed" | "comment";
+import { ActivityType } from "../schemas";
+
 
 export interface Activity {
   id: string;

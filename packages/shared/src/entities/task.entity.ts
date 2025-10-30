@@ -1,4 +1,4 @@
-export type TaskStatus = "todo" | "inProgress" | "done";
+import { TaskStatus } from "../schemas";
 
 export interface Task {
   id: string;
