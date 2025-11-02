@@ -1,9 +1,8 @@
 import { Task } from "@repo/shared";
+import { IRepository } from "./IRepository";
 
-export interface ITaskRepository {
-  findById(id: string): Promise<Task | null>;
+export interface ITaskRepository extends IRepository<Task, string> {
   findAll(): Promise<Task[]>;
-  save(task: Task): Promise<void>;
-  delete(id: string): Promise<void>;
   findByProjectId(projectId: string): Promise<Task[]>;
+  markAsCompleted(taskId: string, completedAt: Date): Promise<void>;
 }

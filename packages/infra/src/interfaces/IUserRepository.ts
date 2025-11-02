@@ -1,8 +1,8 @@
+import { IRepository } from "./IRepository";
 import { User } from "@repo/shared";
 
-export interface IUserRepository {
-  findById(id: string): Promise<User | null>;
+export interface IUserRepository extends IRepository<User, string> {
   findAll(): Promise<User[]>;
-  save(user: User): Promise<void>;
-  delete(id: string): Promise<void>;
+  reactivate(userId: string): Promise<User>;
+  findByEmail(email: string): Promise<User | null>;
 }

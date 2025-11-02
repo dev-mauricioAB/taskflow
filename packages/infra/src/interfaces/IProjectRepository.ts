@@ -1,8 +1,7 @@
 import { Project } from "@repo/shared";
+import { IRepository } from "./IRepository";
 
-export interface IProjectRepository {
-  findById(id: string): Promise<Project | null>;
+export interface IProjectRepository extends IRepository<Project, string> {
   findAll(): Promise<Project[]>;
-  save(project: Project): Promise<void>;
-  delete(id: string): Promise<void>;
+  findByOwnerId(ownerId: string): Promise<Project[]>;
 }
