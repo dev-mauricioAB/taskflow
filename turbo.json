@@ -24,8 +24,7 @@
     },
      "test": {
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/vitest.config.ts"],
-      "dependsOn": ["transit", "@repo/vitest-config#build"],
-      "outputs": ["coverage.json"]
+      "dependsOn": ["transit", "@repo/vitest-config#build"]
     },
     "transit": {
       "dependsOn": ["^transit"]

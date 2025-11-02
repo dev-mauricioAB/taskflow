@@ -6,10 +6,13 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "dev": "tsc -b --watch"
+    "dev": "tsc -b --watch",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@repo/shared": "*",
+    "@vitest/coverage-istanbul": "^3.2.4",
     "typescript": "^5.4.0",
-    "@repo/shared": "*"
+    "vitest": "^3.2.4"
   }
 }

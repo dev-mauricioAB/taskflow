@@ -1,11 +1,11 @@
 import { defineProject, mergeConfig } from "vitest/config";
 import { baseConfig } from "./base-config.js";
 
-export const uiConfig = mergeConfig(
+export const nodeConfig = mergeConfig(
   baseConfig,
   defineProject({
     test: {
-      environment: "jsdom",
+      environment: "node",
     },
   }),
 );

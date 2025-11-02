@@ -8,7 +8,7 @@ export const baseConfig = defineConfig({
         [
           "json",
           {
-            file: `../coverage.json`,
+            // file: `../coverage.json`,
           },
         ],
       ],

@@ -8,14 +8,19 @@
     "build": "tsc -b",
     "dev": "tsc -b --watch",
     "db:generate": "prisma generate --schema=./prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev"
+    "db:migrate": "prisma migrate dev",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
-    "prisma": "^6.18.0"
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "prisma": "^6.18.0",
+    "vitest": "^3.2.4"
   },
   "devDependencies": {
     "@repo/shared": "*",
-    "typescript": "5.9.2"
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "typescript": "5.9.2",
+    "vitest": "^3.2.4"
   }
 }

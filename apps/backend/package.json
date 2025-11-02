@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+     "test": "vitest run"
   },
   "dependencies": {
     "@repo/core": "*",
@@ -21,8 +22,10 @@
     "@repo/typescript-config": "*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@vitest/coverage-istanbul": "^3.2.4",
     "prisma": "^6.17.1",
     "ts-node-dev": "^2.0.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
   }
 }
