@@ -4,4 +4,5 @@ export interface User {
   email: string;
   createdAt: Date;
   updatedAt?: Date; // set by DB via prisma @updatedAt
+  deletedAt?: Date | null; // soft-delete timestamp
 }

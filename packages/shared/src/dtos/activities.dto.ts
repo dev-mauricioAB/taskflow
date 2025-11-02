@@ -6,14 +6,16 @@ import { Id } from "../schemas/user.schema";
 export const CreateActivityDto = z.object({
   taskId: Id,
   actorId: Id,
-  type: ActivityType,             // "created" | "updated" | "status_changed" | "comment"
+  type: ActivityType, // "created" | "updated" | "status_changed" | "comment"
   message: ActivitySchema.shape.message.optional(),
 });
 
 // Activities are immutable in many systems; if you plan to allow edits, use this:
-export const UpdateActivityDto = z.object({
-  message: ActivitySchema.shape.message.optional(),
-}).strict();
+export const UpdateActivityDto = z
+  .object({
+    message: ActivitySchema.shape.message.optional(),
+  })
+  .strict();
 
 export const ActivityParamsDto = z.object({
   id: Id,

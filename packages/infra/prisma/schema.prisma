@@ -8,35 +8,6 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
-model Project {
-  id          String   @id @default(uuid())
-  ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
-  name        String
-  description String?
-  tasks       Task[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Activity {
-  id        String       @id @default(uuid())
-  taskId    String
-  task      Task         @relation(fields: [taskId], references: [id])
-  actorId   String
-  actor     User         @relation(fields: [actorId], references: [id])
-  type      ActivityType
-  message   String?
-  createdAt DateTime     @default(now())
-}
-
-enum ActivityType {
-  created
-  updated
-  status_changed
-  comment
-}
-
 model User {
   id        String     @id @default(uuid())
   name      String
@@ -44,8 +15,21 @@ model User {
   tasks     Task[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
   Project   Project[]
   Activity  Activity[]
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id])
+  name        String
+  description String?
+  tasks       Task[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 }
 
 model Task {
@@ -56,14 +40,34 @@ model Task {
   userId      String
   user        User       @relation(fields: [userId], references: [id])
   projectId   String
-  project     Project    @relation(fields: [projectId], references: [id])
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   activities  Activity[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 }
 
 enum TaskStatus {
   todo
   inProgress
   done
+}
+
+model Activity {
+  id        String       @id @default(uuid())
+  taskId    String
+  task      Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId   String
+  actor     User         @relation(fields: [actorId], references: [id])
+  type      ActivityType
+  message   String?
+  createdAt DateTime     @default(now())
+  deletedAt DateTime?
+}
+
+enum ActivityType {
+  created
+  updated
+  status_changed
+  comment
 }

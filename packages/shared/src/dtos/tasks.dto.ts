@@ -6,7 +6,7 @@ import { Id } from "../schemas/user.schema";
 export const CreateTaskDto = z.object({
   title: TaskSchema.shape.title,
   description: TaskSchema.shape.description.optional(),
-  status: TaskStatus,     // "todo" | "inProgress" | "done"
+  status: TaskStatus, // "todo" | "inProgress" | "done"
   userId: Id,
   projectId: Id,
 });

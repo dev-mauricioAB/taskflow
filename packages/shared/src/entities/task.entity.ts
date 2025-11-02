@@ -5,8 +5,9 @@ export interface Task {
   title: string;
   description?: string | null;
   status: TaskStatus;
-  userId: string;          // owner/assignee
-  projectId: string;       // new relation to Project
+  userId: string; // owner/assignee
+  projectId: string; // new relation to Project
   createdAt: Date;
-  updatedAt?: Date;        // set by DB
+  updatedAt?: Date; // set by DB
+  deletedAt?: Date | null; // soft-delete timestamp
 }
