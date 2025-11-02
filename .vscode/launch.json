@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Web: dev",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "yarn dev",             // or npm run dev / yarn dev
+      "cwd": "${workspaceFolder}/apps/web",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Backend: dev",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm dev",             // runs your ts-node/nodemon/vite-node, etc.
+      "cwd": "${workspaceFolder}/apps/backend",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Web + Backend",
+      "configurations": ["Web: dev", "Backend: dev"]
+    }
+  ]
+}
