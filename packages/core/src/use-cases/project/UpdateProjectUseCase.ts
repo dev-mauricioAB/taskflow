@@ -1,9 +1,4 @@
-import {
-  DomainError,
-  IEventPublisher,
-  IProjectRepository,
-  NotFoundError,
-} from "@repo/infra";
+import { DomainError, IEventPublisher, IProjectRepository } from "@repo/infra";
 import { Project, PROJECT_UPDATED, ProjectUpdatedPayload } from "@repo/shared";
 
 type Input = {

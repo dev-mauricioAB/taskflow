@@ -1,8 +1,8 @@
 import {
+  DomainError,
   IEventPublisher,
   IUserRepository,
   NewEntity,
-  NotFoundError,
 } from "@repo/infra";
 import { User, USER_UPDATED, UserUpdatedPayload } from "@repo/shared";
 
@@ -23,7 +23,10 @@ export class UpdateUserUseCase {
     const { changed } = await this.users.update(userId, patch);
 
     if (!changed) {
-      throw new NotFoundError(`User '${userId}' not found`);
+      throw new DomainError({
+        code: "NOT_FOUND",
+        message: `User '${userId}' not found`,
+      });
     }
 
     const payload: UserUpdatedPayload = {

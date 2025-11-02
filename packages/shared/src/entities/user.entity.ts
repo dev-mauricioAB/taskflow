@@ -3,6 +3,6 @@ export interface User {
   name: string;
   email: string;
   createdAt: Date;
-  updatedAt?: Date; // set by DB via prisma @updatedAt
+  updatedAt: Date; // set by DB via prisma @updatedAt
   deletedAt?: Date | null; // soft-delete timestamp
 }

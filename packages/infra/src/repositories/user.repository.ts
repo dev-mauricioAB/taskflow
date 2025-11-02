@@ -1,8 +1,6 @@
 import { prisma } from "../database/prisma.client";
-import { User } from "@repo/shared";
+import { TCreateUserDto, TUpdateUserDto, User } from "@repo/shared";
 import { IUserRepository } from "../interfaces/IUserRepository";
-
-type UserPatch = Partial<Pick<User, "name" | "email">>;
 
 export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<User | null> {
@@ -60,7 +58,7 @@ export class UserRepository implements IUserRepository {
     await prisma.user.delete({ where: { id } });
   }
 
-  async create(user: User): Promise<User> {
+  async create(user: TCreateUserDto): Promise<User> {
     // Same guidance: omit id if DB generates it
     return prisma.user.create({
       data: {
@@ -72,7 +70,7 @@ export class UserRepository implements IUserRepository {
 
   async update(
     userId: string,
-    patch: UserPatch,
+    patch: TUpdateUserDto,
   ): Promise<{ changed: Record<string, unknown> }> {
     // 1) Sanitize and normalize what you will send to Prisma
     const safeData = {

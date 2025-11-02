@@ -5,7 +5,13 @@ import {
   ReactivateUserUseCase,
 } from "@repo/core";
 import { eventBusPublisher, UserRepository } from "@repo/infra";
-import { TUpdateUserDto, TUserParamsDto, DeleteQuery } from "@repo/shared";
+import {
+  TUpdateUserDto,
+  TUserParamsDto,
+  DeleteQuery,
+  TCreateUserDto,
+  TUserQueryDto,
+} from "@repo/shared";
 
 export class UserController {
   private userRepo = new UserRepository();
@@ -20,7 +26,7 @@ export class UserController {
   private reactivateUserUseCase = new ReactivateUserUseCase(this.userRepo);
 
   // POST /users
-  async create(req: Request, res: Response) {
+  async create(req: Request<TCreateUserDto>, res: Response) {
     if (!req.body || typeof req.body !== "object") {
       res.status(400).json({ error: "Invalid body" });
       return;
@@ -31,7 +37,7 @@ export class UserController {
   }
 
   // GET /users
-  async findAll(_req: Request, res: Response) {
+  async findAll(_req: Request<{}, {}, {}, TUserQueryDto>, res: Response) {
     const users = await this.userRepo.findAll();
     res.status(200).json(users);
   }
@@ -71,7 +77,7 @@ export class UserController {
   }
 
   // GET /users/:id
-  async findById(req: Request, res: Response) {
+  async findById(req: Request<TUserParamsDto>, res: Response) {
     const id = req.params.id;
     if (!id) {
       res.status(400).json({ error: "Missing user id" });
