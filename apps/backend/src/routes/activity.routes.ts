@@ -3,7 +3,11 @@ import { Router } from "express";
 import { ActivityController } from "../controllers/activity.controller";
 
 export const activityRoutes = Router();
-const ctrl = new ActivityController();
+const controller = new ActivityController();
 
-activityRoutes.post("/", (req, res) => ctrl.create(req, res));
-activityRoutes.get("/task/:taskId", (req, res) => ctrl.findByTask(req, res));
+activityRoutes.post("/", (req, res) => controller.create(req, res));
+activityRoutes.get("/task/:id", (req, res) =>
+  controller.findActivityByTaskId(req, res),
+);
+activityRoutes.patch("/:id", (req, res) => controller.update(req, res));
+activityRoutes.delete("/:id", (req, res) => controller.delete(req, res));
