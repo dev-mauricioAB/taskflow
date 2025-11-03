@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { UserSchema, Id } from "../schemas/user.schema";
+import { CursorPaginationDto, OffsetPaginationDto } from "./pagination.dto";
 
 // Create: client supplies name/email; server sets id/createdAt/updatedAt
 export const CreateUserDto = z.object({
@@ -26,3 +27,10 @@ export type TCreateUserDto = z.infer<typeof CreateUserDto>;
 export type TUpdateUserDto = z.infer<typeof UpdateUserDto>;
 export type TUserParamsDto = z.infer<typeof UserParamsDto>;
 export type TUserQueryDto = z.infer<typeof UserQueryDto>;
+
+// Users may add resource-specific filters later (role, status, etc.)
+export const UserListOffsetQueryDto = OffsetPaginationDto.extend({});
+export const UserListCursorQueryDto = CursorPaginationDto.extend({});
+
+export type TUserListOffsetQuery = z.infer<typeof UserListOffsetQueryDto>;
+export type TUserListCursorQuery = z.infer<typeof UserListCursorQueryDto>;

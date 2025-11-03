@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Common primitives
-export const Id = z.string().cuid2("Invalid id"); // switch to z.string().uuid() if you use UUIDs
+export const Id = z.uuid("Invalid id");
 export const ISODate = z.coerce.date();
 
 // User
