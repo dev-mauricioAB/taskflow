@@ -1,17 +1,116 @@
 import { prisma } from "../database/prisma.client";
-import { TCreateUserDto, TUpdateUserDto, User } from "@repo/shared";
+import {
+  CursorPage,
+  OffsetListParams,
+  OffsetPage,
+  TCreateUserDto,
+  TCursorPagination,
+  TOffsetPagination,
+  TUpdateUserDto,
+  User,
+  UserCursorSortBy,
+  UserSortBy,
+} from "@repo/shared";
 import { IUserRepository } from "../interfaces/IUserRepository";
+import { Prisma } from "@prisma/client";
 
 export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<User | null> {
     return prisma.user.findUnique({ where: { id } });
   }
 
-  async findAll(): Promise<User[]> {
-    // If using soft delete, you likely want only active users by default
-    return prisma.user.findMany({
-      // where: { deletedAt: null }, // remove if you prefer no filter here
+  async findAll(
+    params: TOffsetPagination,
+  ): Promise<OffsetPage<User, UserSortBy>> {
+    const {
+      q,
+      limit = 20,
+      offset = 0,
+      includeDeleted = false,
+      sortBy = "createdAt",
+      sortDir = "desc",
+    } = params;
+
+    const where: Prisma.UserWhereInput = {};
+
+    if (!includeDeleted) {
+      where.deletedAt = null; // exclude soft-deleted by default
+    }
+
+    if (q && q.trim() !== "") {
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const orderBy = { [sortBy]: sortDir } as const;
+
+    const [data, total] = await prisma.$transaction([
+      prisma.user.findMany({
+        where,
+        orderBy,
+        take: limit,
+        skip: offset,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      limit,
+      offset,
+      sortBy,
+      sortDir,
+    };
+  }
+
+  async findAllCursor(
+    params: TCursorPagination,
+  ): Promise<CursorPage<User, UserCursorSortBy>> {
+    const {
+      q,
+      take = 20, // positive forward, negative backward
+      cursor, // { id: string } after DTO coercion
+      includeDeleted = false,
+      sortBy = "id",
+      sortDir = "asc",
+    } = params;
+
+    const where: Prisma.UserWhereInput = {};
+
+    if (!includeDeleted) {
+      where.deletedAt = null; // exclude soft-deleted
+    }
+
+    if (q && q.trim() !== "") {
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    // For cursor pagination, ordering must be deterministic and match the cursor field
+    const orderBy = { [sortBy]: sortDir } as const;
+
+    const data = await prisma.user.findMany({
+      where,
+      orderBy,
+      take,
+      skip: cursor ? 1 : 0, // skip the cursor row itself
+      cursor: cursor ?? undefined, // { id: string }
     });
+
+    const nextCursor =
+      take > 0 && data.length > 0 && data[data.length - 1]
+        ? { id: data[data.length - 1]!.id }
+        : undefined;
+
+    const prevCursor =
+      take < 0 && data.length > 0 && data[0] ? { id: data[0]!.id } : undefined;
+
+    return { data, nextCursor, prevCursor, sortBy, sortDir };
   }
 
   async exists(userId: string): Promise<boolean> {

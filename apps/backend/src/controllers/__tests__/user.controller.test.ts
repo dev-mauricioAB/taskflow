@@ -1,9 +1,9 @@
 // tests/controllers/user.controller.spec.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { UserController } from "../user.controller";
 
-// Minimal Express req/res helpers
+// Minimal Express req/res/next helpers
 function mockReq<TBody = any, TParams = any, TQuery = any>(
   data: Partial<Request<TParams, any, TBody, TQuery>> = {},
 ) {
@@ -24,6 +24,10 @@ function mockRes() {
   return res;
 }
 
+function mockNext() {
+  return vi.fn() as unknown as NextFunction;
+}
+
 describe("UserController", () => {
   let controller: UserController;
 
@@ -33,191 +37,224 @@ describe("UserController", () => {
   });
 
   describe("create", () => {
-    it("400 when body missing/invalid", async () => {
-      const req = mockReq({ body: undefined });
-      const res = mockRes();
-
-      await controller.create(req as any, res as any);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: "Invalid body" });
-    }); // Chainable res mocks and guard path [web:6][web:7]
-
     it("201 and returns created user", async () => {
       const req = mockReq({ body: { email: "a@b.com", name: "A" } });
       const res = mockRes();
+      const next = mockNext();
 
       const execute = vi.fn().mockResolvedValue({ id: "u1" });
-      const getterSpy = vi
-        .spyOn(controller as any, "createUserUseCase", "get")
-        .mockReturnValue({ execute });
+      vi.spyOn(controller as any, "createUserUseCase", "get").mockReturnValue({ execute });
 
-      await controller.create(req as any, res as any);
+      await controller.create(req as any, res as any, next);
 
       expect(execute).toHaveBeenCalledWith({ email: "a@b.com", name: "A" });
-      expect(getterSpy).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({ id: "u1" });
-    }); // Assert on mocked function, not calling spy object [web:12][web:19]
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("calls next on error", async () => {
+      const req = mockReq({ body: { email: "a@b.com", name: "A" } });
+      const res = mockRes();
+      const next = mockNext();
+
+      const error = new Error("boom");
+      const execute = vi.fn().mockRejectedValue(error);
+      vi.spyOn(controller as any, "createUserUseCase", "get").mockReturnValue({ execute });
+
+      await controller.create(req as any, res as any, next);
+
+      expect(next).toHaveBeenCalledWith(error);
+    });
   });
 
   describe("findAll", () => {
-    it("200 and returns list", async () => {
-      const req = mockReq();
+    it("200 and returns paginated list", async () => {
+      const req = mockReq({ query: { limit: 20, offset: 0, sortBy: "createdAt", sortDir: "desc", includeDeleted: false } });
       const res = mockRes();
+      const next = mockNext();
 
-      const findAll = vi.fn().mockResolvedValue([{ id: "u1" }]);
-      const getterSpy = vi
-        .spyOn(controller as any, "userRepo", "get")
-        .mockReturnValue({ findAll });
+      const page = {
+        data: [{ id: "u1" }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+        sortBy: "createdAt",
+        sortDir: "desc",
+      };
+      const findAll = vi.fn().mockResolvedValue(page);
+      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findAll });
 
-      await controller.findAll(req as any, res as any);
+      await controller.findAll(req as any, res as any, next);
 
-      expect(getterSpy).toHaveBeenCalledTimes(1);
-      expect(findAll).toHaveBeenCalledTimes(1);
+      expect(findAll).toHaveBeenCalledWith({
+        q: undefined,
+        limit: 20,
+        offset: 0,
+        includeDeleted: false,
+        sortBy: "createdAt",
+        sortDir: "desc",
+      });
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith([{ id: "u1" }]);
-    }); // Direct handler invocation with repo method stub [web:6][web:5]
+      expect(res.json).toHaveBeenCalledWith(page);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("calls next on error", async () => {
+      const req = mockReq({ query: {} });
+      const res = mockRes();
+      const next = mockNext();
+
+      const err = new Error("db");
+      const findAll = vi.fn().mockRejectedValue(err);
+      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findAll });
+
+      await controller.findAll(req as any, res as any, next);
+      expect(next).toHaveBeenCalledWith(err);
+    });
   });
 
   describe("delete", () => {
     it("204 and calls hard delete", async () => {
-      const req = mockReq({ params: { id: "u1" }, query: { hard: "true" } });
+      const req = mockReq({ params: { id: "u1" } });
       const res = mockRes();
+      const next = mockNext();
 
       const execute = vi.fn().mockResolvedValue(undefined);
-      const getterSpy = vi
-        .spyOn(controller as any, "deleteUserUseCase", "get")
-        .mockReturnValue({ execute });
+      vi.spyOn(controller as any, "deleteUserUseCase", "get").mockReturnValue({ execute });
 
-      await controller.delete(req as any, res as any);
+      await controller.delete(req as any, res as any, next);
 
-      expect(getterSpy).toHaveBeenCalledTimes(1);
       expect(execute).toHaveBeenCalledWith({ userId: "u1", hard: true });
       expect(res.status).toHaveBeenCalledWith(204);
-      expect(res.send).toHaveBeenCalledTimes(1);
-    }); // 204 + send() and argument assertion [web:6][web:7]
+      expect(res.send).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("calls next on error", async () => {
+      const req = mockReq({ params: { id: "u1" } });
+      const res = mockRes();
+      const next = mockNext();
+
+      const err = new Error("boom");
+      const execute = vi.fn().mockRejectedValue(err);
+      vi.spyOn(controller as any, "deleteUserUseCase", "get").mockReturnValue({ execute });
+
+      await controller.delete(req as any, res as any, next);
+      expect(next).toHaveBeenCalledWith(err);
+    });
   });
 
   describe("update", () => {
-    it("400 when email or name invalid", async () => {
-      const req = mockReq({
-        params: { id: "u1" },
-        body: { email: "", name: "" },
-      });
-      const res = mockRes();
-
-      await controller.update(req as any, res as any);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        error: "Email and Name are required",
-      });
-    }); // Validation branch without touching repo [web:6][web:5]
-
-    it("200 and returns changed flag", async () => {
+    it("200 and returns changed keys", async () => {
       const req = mockReq({
         params: { id: "u1" },
         body: { email: "a@b.com", name: "Alice" },
       });
       const res = mockRes();
+      const next = mockNext();
 
-      const update = vi.fn().mockResolvedValue({ changed: true });
-      const getterSpy = vi
-        .spyOn(controller as any, "userRepo", "get")
-        .mockReturnValue({ update });
+      const update = vi.fn().mockResolvedValue({ changed: { name: "Alice" } });
+      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ update });
 
-      await controller.update(req as any, res as any);
+      await controller.update(req as any, res as any, next);
 
-      expect(getterSpy).toHaveBeenCalledTimes(1);
-      expect(update).toHaveBeenCalledWith("u1", {
-        email: "a@b.com",
-        name: "Alice",
-      });
+      expect(update).toHaveBeenCalledWith("u1", { email: "a@b.com", name: "Alice" });
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ id: "u1", changed: true });
-    }); // Positive path and payload shape [web:6][web:5]
+      expect(res.json).toHaveBeenCalledWith({ id: "u1", changed: { name: "Alice" } });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("calls next on error", async () => {
+      const req = mockReq({ params: { id: "u1" }, body: { email: "a@b.com", name: "Alice" } });
+      const res = mockRes();
+      const next = mockNext();
+
+      const err = new Error("db");
+      const update = vi.fn().mockRejectedValue(err);
+      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ update });
+
+      await controller.update(req as any, res as any, next);
+      expect(next).toHaveBeenCalledWith(err);
+    });
   });
 
   describe("findById", () => {
-    it("400 when id missing", async () => {
-      const req = mockReq({ params: {} });
-      const res = mockRes();
-
-      await controller.findById(req as any, res as any);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: "Missing user id" });
-    }); // Required param guard [web:6][web:5]
-
     it("404 when not found", async () => {
       const req = mockReq({ params: { id: "u1" } });
       const res = mockRes();
+      const next = mockNext();
 
       const findById = vi.fn().mockResolvedValue(null);
-      const getterSpy = vi
-        .spyOn(controller as any, "userRepo", "get")
-        .mockReturnValue({ findById });
+      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findById });
 
-      await controller.findById(req as any, res as any);
+      await controller.findById(req as any, res as any, next);
 
-      expect(getterSpy).toHaveBeenCalledTimes(1);
       expect(findById).toHaveBeenCalledWith("u1");
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ error: "User not found" });
-    }); // Not-found branch [web:6][web:5]
+      expect(next).not.toHaveBeenCalled();
+    });
 
     it("200 and returns user", async () => {
+      const user = { id: "u1", email: "a@b.com", name: "Alice" };
       const req = mockReq({ params: { id: "u1" } });
       const res = mockRes();
+      const next = mockNext();
 
-      const user = { id: "u1", email: "a@b.com", name: "Alice" };
       const findById = vi.fn().mockResolvedValue(user);
-      const getterSpy = vi
-        .spyOn(controller as any, "userRepo", "get")
-        .mockReturnValue({ findById });
+      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findById });
 
-      await controller.findById(req as any, res as any);
+      await controller.findById(req as any, res as any, next);
 
-      expect(getterSpy).toHaveBeenCalledTimes(1);
       expect(findById).toHaveBeenCalledWith("u1");
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(user);
-    }); // Success branch [web:6][web:5]
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("calls next on error", async () => {
+      const req = mockReq({ params: { id: "u1" } });
+      const res = mockRes();
+      const next = mockNext();
+
+      const err = new Error("db");
+      const findById = vi.fn().mockRejectedValue(err);
+      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findById });
+
+      await controller.findById(req as any, res as any, next);
+      expect(next).toHaveBeenCalledWith(err);
+    });
   });
 
   describe("reactivate", () => {
-    it("400 when email missing", async () => {
-      const req = mockReq({ body: {} });
-      const res = mockRes();
-
-      await controller.reactivate(req as any, res as any);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: "Email is required" });
-    }); // Email validation mirrors controller logic [web:6][web:5]
-
     it("200 and returns user from use case", async () => {
-      const req = mockReq({ body: { email: "a@b.com" } });
+      const req = mockReq<{ email: string }>({ body: { email: "a@b.com" } });
       const res = mockRes();
+      const next = mockNext();
 
-      const execute = vi
-        .fn()
-        .mockResolvedValue({ id: "u1", email: "a@b.com", active: true });
-      const getterSpy = vi
-        .spyOn(controller as any, "reactivateUserUseCase", "get")
-        .mockReturnValue({ execute });
+      const execute = vi.fn().mockResolvedValue({ id: "u1", email: "a@b.com", active: true });
+      vi.spyOn(controller as any, "reactivateUserUseCase", "get").mockReturnValue({ execute });
 
-      await controller.reactivate(req as any, res as any);
+      await controller.reactivate(req as any, res as any, next);
 
-      expect(getterSpy).toHaveBeenCalledTimes(1);
       expect(execute).toHaveBeenCalledWith("a@b.com");
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        id: "u1",
-        email: "a@b.com",
-        active: true,
-      });
-    }); // Stub dependency and assert inputs/output [web:12][web:6]
+      expect(res.json).toHaveBeenCalledWith({ id: "u1", email: "a@b.com", active: true });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("calls next on error", async () => {
+      const req = mockReq<{ email: string }>({ body: { email: "a@b.com" } });
+      const res = mockRes();
+      const next = mockNext();
+
+      const err = new Error("boom");
+      const execute = vi.fn().mockRejectedValue(err);
+      vi.spyOn(controller as any, "reactivateUserUseCase", "get").mockReturnValue({ execute });
+
+      await controller.reactivate(req as any, res as any, next);
+      expect(next).toHaveBeenCalledWith(err);
+    });
   });
 });

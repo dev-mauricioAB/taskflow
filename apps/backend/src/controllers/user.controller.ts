@@ -1,16 +1,16 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import {
   CreateUserUseCase,
   DeleteUserUseCase,
   ReactivateUserUseCase,
 } from "@repo/core";
-import { eventBusPublisher, UserRepository } from "@repo/infra";
+import { DomainError, eventBusPublisher, UserRepository } from "@repo/infra";
 import {
   TUpdateUserDto,
   TUserParamsDto,
-  DeleteQuery,
   TCreateUserDto,
-  TUserQueryDto,
+  TUserListOffsetQuery,
+  TUserListCursorQuery,
 } from "@repo/shared";
 
 export class UserController {
@@ -26,84 +26,141 @@ export class UserController {
   private reactivateUserUseCase = new ReactivateUserUseCase(this.userRepo);
 
   // POST /users
-  async create(req: Request<TCreateUserDto>, res: Response) {
-    if (!req.body || typeof req.body !== "object") {
-      res.status(400).json({ error: "Invalid body" });
-      return;
+  async create(
+    req: Request<{}, {}, TCreateUserDto>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const user = await this.createUserUseCase.execute(req.body);
+      return res.status(201).json(user);
+    } catch (err) {
+      return next(err);
     }
-
-    const user = await this.createUserUseCase.execute(req.body);
-    res.status(201).json(user);
   }
 
   // GET /users
-  async findAll(_req: Request<{}, {}, {}, TUserQueryDto>, res: Response) {
-    const users = await this.userRepo.findAll();
-    res.status(200).json(users);
+  async findAll(
+    req: Request<{}, {}, {}, TUserListOffsetQuery>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { q, limit, offset, includeDeleted, sortBy, sortDir } = req.query;
+      const result = await this.userRepo.findAll({
+        q,
+        limit,
+        offset,
+        includeDeleted,
+        sortBy,
+        sortDir,
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // GET /users/cursor
+  // Cursor pagination
+  async findAllCursor(
+    req: Request<{}, {}, {}, TUserListCursorQuery>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { q, take, cursor, includeDeleted, sortBy, sortDir } =
+        req.query;
+
+      const result = await this.userRepo.findAllCursor({
+        q,
+        take,
+        cursor,
+        includeDeleted,
+        sortBy,
+        sortDir,
+      });
+
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
   }
 
   // DELETE /users/:id?hard=true
   async delete(
-    req: Request<TUserParamsDto, {}, {}, DeleteQuery>,
+    req: Request<TUserParamsDto>,
     res: Response,
+    next: NextFunction,
   ) {
-    const id = req.params.id;
-    // const hard = req.query.hard === "true";
-    await this.deleteUserUseCase.execute({ userId: id, hard: true });
-    res.status(204).send();
+    try {
+      const { id } = req.params;
+      // Decide soft vs hard delete policy; example uses hard: true as earlier
+      await this.deleteUserUseCase.execute({ userId: id, hard: true });
+      return res.status(204).send();
+    } catch (err) {
+      return next(err);
+    }
   }
 
   // PATCH /users/:id
   async update(
     req: Request<TUserParamsDto, {}, TUpdateUserDto>,
     res: Response,
+    next: NextFunction,
   ) {
-    const id = req.params.id;
-    const { email, name } = req.body ?? {};
-    if (
-      typeof email !== "string" ||
-      email.trim() === "" ||
-      typeof name !== "string" ||
-      name.trim() === ""
-    ) {
-      return res.status(400).json({ error: "Email and Name are required" });
-    }
-    const { changed } = await this.userRepo.update(id, {
-      email,
-      name,
-    });
+    try {
+      const { id } = req.params;
+      const { email, name } = req.body;
 
-    res.status(200).json({ id, changed });
+      // Repository should ignore undefined fields and trim where appropriate
+      const { changed } = await this.userRepo.update(id, { email, name });
+
+      return res.status(200).json({ id, changed });
+    } catch (err) {
+      return next(err);
+    }
   }
 
   // GET /users/:id
-  async findById(req: Request<TUserParamsDto>, res: Response) {
-    const id = req.params.id;
-    if (!id) {
-      res.status(400).json({ error: "Missing user id" });
-      return;
-    }
+  async findById(
+    req: Request<TUserParamsDto>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { id } = req.params;
 
-    const user = await this.userRepo.findById(id);
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
+      const user = await this.userRepo.findById(id);
+      if (!user) {
+        return next(new DomainError({ code: "NOT_FOUND", message: "User not found" }));
+      }
 
-    res.status(200).json(user);
+      return res.status(200).json(user);
+    } catch (err) {
+      return next(err);
+    }
   }
 
-  // POST /users / reactivate
-  async reactivate(req: Request, res: Response) {
-    const { email } = req.body ?? {};
-    if (typeof email !== "string" || email.trim() === "") {
-      return res.status(400).json({ error: "Email is required" }); // validation error [web:62]
+  // POST /users/reactivate
+  async reactivate(
+    req: Request<{}, {}, TUpdateUserDto>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return next(new DomainError({ code: "VALIDATION_FAILED", message: "Email is required for reactivation" }));
+      }
+
+      // Note: in a real app, verify email ownership (OTP/magic link) before reactivation.
+      const user = await this.reactivateUserUseCase.execute(email);
+
+      return res.status(200).json(user);
+    } catch (err) {
+      return next(err);
     }
-
-    // Important: in a real app, verify email ownership (OTP/magic link) before reactivation.
-
-    const user = await this.reactivateUserUseCase.execute(email);
-    // If the account was inactive, it is now active; if already active, return it as-is
-    return res.status(200).json(user);
   }
 }

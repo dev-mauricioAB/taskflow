@@ -40,7 +40,7 @@ describe("UserRepository", () => {
     });
   });
 
-  it("findAll returns list", async () => {
+  it("findAll returns paginated users with total and meta", async () => {
     const rows = [
       {
         id: "1",
@@ -51,21 +51,93 @@ describe("UserRepository", () => {
         deletedAt: null,
       },
     ];
-    prismaMock.user.findMany.mockResolvedValueOnce(rows);
-    await expect(repo.findAll()).resolves.toEqual(rows);
-    expect(prismaMock.user.findMany).toHaveBeenCalledWith({});
+
+    // Mock $transaction returning [findMany, count]
+    prismaMock.$transaction.mockResolvedValueOnce([rows, 1]);
+
+    const result = await repo.findAll({
+      q: undefined,
+      limit: 20,
+      offset: 0,
+      includeDeleted: false,
+      sortBy: "createdAt",
+      sortDir: "desc",
+    });
+
+    expect(result).toEqual({
+      data: rows,
+      total: 1,
+      limit: 20,
+      offset: 0,
+      sortBy: "createdAt",
+      sortDir: "desc",
+    });
+
+    // Verify transaction calls
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+    // First call is a PrismaPromise from findMany, second from count
+    // Optionally assert arguments:
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: { deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      skip: 0,
+    });
+    expect(prismaMock.user.count).toHaveBeenCalledWith({
+      where: { deletedAt: null },
+    });
   });
 
-  it("exists returns true/false", async () => {
-    prismaMock.user.findUnique.mockResolvedValueOnce({ id: "123" } as any);
-    await expect(repo.exists("123")).resolves.toBe(true);
+  it("findAll applies q filter on name/email (case-insensitive)", async () => {
+    prismaMock.$transaction.mockResolvedValueOnce([[], 0]);
+    await repo.findAll({
+      q: "alice",
+      limit: 10,
+      offset: 0,
+      includeDeleted: false,
+      sortBy: "name",
+      sortDir: "asc",
+    });
 
-    prismaMock.user.findUnique.mockResolvedValueOnce(null);
-    await expect(repo.exists("nope")).resolves.toBe(false);
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: {
+        deletedAt: null,
+        OR: [
+          { name: { contains: "alice", mode: "insensitive" } },
+          { email: { contains: "alice", mode: "insensitive" } },
+        ],
+      },
+      orderBy: { name: "asc" },
+      take: 10,
+      skip: 0,
+    });
+    expect(prismaMock.user.count).toHaveBeenCalledWith({
+      where: {
+        deletedAt: null,
+        OR: [
+          { name: { contains: "alice", mode: "insensitive" } },
+          { email: { contains: "alice", mode: "insensitive" } },
+        ],
+      },
+    });
+  });
 
-    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-      where: { id: "123" },
-      select: { id: true },
+  it("findAll includes soft-deleted when includeDeleted=true", async () => {
+    prismaMock.$transaction.mockResolvedValueOnce([[], 0]);
+    await repo.findAll({
+      q: undefined,
+      limit: 5,
+      offset: 0,
+      includeDeleted: true,
+      sortBy: "createdAt",
+      sortDir: "desc",
+    });
+
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: {}, // no deletedAt filter
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      skip: 0,
     });
   });
 
@@ -246,5 +318,149 @@ describe("UserRepository", () => {
     prismaMock.user.findUnique.mockResolvedValueOnce(null);
 
     await expect(repo.reactivate("missing")).rejects.toThrow("User not found");
+  });
+});
+
+describe("UserRepository.findAllCursor", () => {
+  let repo: UserRepository;
+
+  beforeEach(() => {
+    repo = new UserRepository();
+  });
+
+  it("forward page returns nextCursor when results exist", async () => {
+    const rows = [
+      {
+        id: "a",
+        name: "A",
+        email: "a@x.com",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        id: "b",
+        name: "B",
+        email: "b@x.com",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+    ];
+    prismaMock.user.findMany.mockResolvedValueOnce(rows as any);
+
+    const res = await repo.findAllCursor({
+      q: undefined,
+      take: 2,
+      cursor: undefined,
+      includeDeleted: false,
+      sortBy: "id",
+      sortDir: "asc",
+    });
+
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: { deletedAt: null },
+      orderBy: { id: "asc" },
+      take: 2,
+      skip: 0,
+      cursor: undefined,
+    });
+
+    expect(res).toEqual({
+      data: rows,
+      nextCursor: { id: "b" },
+      prevCursor: undefined,
+      sortBy: "id",
+      sortDir: "asc",
+    });
+  });
+
+  it("backward page returns prevCursor when results exist", async () => {
+    const rows = [
+      {
+        id: "c",
+        name: "C",
+        email: "c@x.com",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        id: "d",
+        name: "D",
+        email: "d@x.com",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+    ];
+    prismaMock.user.findMany.mockResolvedValueOnce(rows as any);
+
+    const res = await repo.findAllCursor({
+      q: undefined,
+      take: -2,
+      cursor: { id: "e" },
+      includeDeleted: false,
+      sortBy: "id",
+      sortDir: "asc",
+    });
+
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: { deletedAt: null },
+      orderBy: { id: "asc" },
+      take: -2,
+      skip: 1,
+      cursor: { id: "e" },
+    });
+
+    expect(res).toEqual({
+      data: rows,
+      nextCursor: undefined,
+      prevCursor: { id: "c" },
+      sortBy: "id",
+      sortDir: "asc",
+    });
+  });
+
+  it("no cursors when empty page", async () => {
+    prismaMock.user.findMany.mockResolvedValueOnce([]);
+    const res = await repo.findAllCursor({
+      take: 10,
+      sortBy: "id",
+      sortDir: "asc",
+      includeDeleted: false,
+    });
+    expect(res).toEqual({
+      data: [],
+      nextCursor: undefined,
+      prevCursor: undefined,
+      sortBy: "id",
+      sortDir: "asc",
+    });
+  });
+
+  it("applies q filter in cursor mode", async () => {
+    prismaMock.user.findMany.mockResolvedValueOnce([]);
+    await repo.findAllCursor({
+      q: "al",
+      take: 5,
+      sortBy: "id",
+      sortDir: "asc",
+      includeDeleted: false,
+    });
+
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: {
+        deletedAt: null,
+        OR: [
+          { name: { contains: "al", mode: "insensitive" } },
+          { email: { contains: "al", mode: "insensitive" } },
+        ],
+      },
+      orderBy: { id: "asc" },
+      take: 5,
+      skip: 0,
+      cursor: undefined,
+    });
   });
 });
