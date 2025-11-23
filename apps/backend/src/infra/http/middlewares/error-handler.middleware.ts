@@ -2,6 +2,7 @@
 import { NextFunction, Request, Response } from "express";
 import { DomainError } from "@repo/infra";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { httpStatusByCode } from "@repo/shared";
 
 export function errorHandler(
   err: unknown,
@@ -21,7 +22,7 @@ export function errorHandler(
           .json({ error: err.message, code: err.code, details: err.details });
       case "VALIDATION_FAILED":
         return res
-          .status(400)
+          .status(httpStatusByCode.VALIDATION_FAILED)
           .json({ error: err.message, code: err.code, details: err.details });
       default:
         return res

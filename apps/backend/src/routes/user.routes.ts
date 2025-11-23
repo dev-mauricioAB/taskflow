@@ -1,16 +1,16 @@
 import { Router } from "express";
 import { UserController } from "../controllers/user.controller";
-import { validate } from "../infra/http/middlewares/validate";
+import { validate } from "../infra/http/middlewares/validate-request.middleware";
 import {
   CreateUserDto,
   TCreateUserDto,
   TUpdateUserDto,
-  TUserListCursorQuery,
-  TUserListOffsetQuery,
+  TUserOffsetPagination,
+  TUserCursorPagination,
   TUserParamsDto,
   UpdateUserDto,
-  UserListCursorQueryDto,
-  UserListOffsetQueryDto,
+  UserCursorPaginationDto,
+  UserOffsetPaginationDto,
   UserParamsDto,
 } from "@repo/shared";
 import {
@@ -26,8 +26,8 @@ const controller = new UserController();
 // Offset-based: GET /users?limit=20&offset=0&q=...
 userRouter.get(
   "/",
-  validate({ query: UserListOffsetQueryDto }),
-  withQuery<TUserListOffsetQuery>((req, res, next) =>
+  validate({ query: UserOffsetPaginationDto }),
+  withQuery<TUserOffsetPagination>((req, res, next) =>
     controller.findAll(req, res, next),
   ),
 );
@@ -35,8 +35,8 @@ userRouter.get(
 // Cursor-based: GET /users/cursor?take=20&cursor=abc123&q=...
 userRouter.get(
   "/cursor",
-  validate({ query: UserListCursorQueryDto }),
-  withQuery<TUserListCursorQuery>((req, res, next) =>
+  validate({ query: UserCursorPaginationDto }),
+  withQuery<TUserCursorPagination>((req, res, next) =>
     controller.findAllCursor(req, res, next),
   ),
 );

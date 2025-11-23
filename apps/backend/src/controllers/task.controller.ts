@@ -1,92 +1,162 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import {
   CompleteTaskUseCase,
   CreateTaskUseCase,
   DeleteTaskUseCase,
+  GetTaskByIdUseCase,
+  GetTasksCursorUseCase,
+  GetTasksOffsetUseCase,
   UpdateTaskUseCase,
 } from "@repo/core";
 import { eventBusPublisher, TaskRepository } from "@repo/infra";
 import {
+  CursorPage,
+  CursorSortBy,
   DeleteQuery,
+  Task,
   TCreateTaskDto,
+  TTaskCursorPagination,
+  TTaskOffsetPagination,
   TTaskParamsDto,
-  TTaskQueryDto,
   TUpdateTaskDto,
 } from "@repo/shared";
 
 export class TaskController {
   private taskRepo = new TaskRepository();
-  private createTaskUseCase = new CreateTaskUseCase(
+  // Commands (events published inside use cases)
+  private createTaskEC = new CreateTaskUseCase(
     this.taskRepo,
     eventBusPublisher,
   );
-  private updateTaskUseCase = new UpdateTaskUseCase(
+  private updateTaskUC = new UpdateTaskUseCase(
     this.taskRepo,
     eventBusPublisher,
   );
-  private deleteTaskUseCase = new DeleteTaskUseCase(
+  private deleteTaskUC = new DeleteTaskUseCase(
     this.taskRepo,
     eventBusPublisher,
   );
-  private completeTaskUseCase = new CompleteTaskUseCase(
+  private completeTaskUC = new CompleteTaskUseCase(
     this.taskRepo,
     eventBusPublisher,
   );
+
+  // Queries (no events)
+  private getTasksOffsetUC = new GetTasksOffsetUseCase(this.taskRepo);
+  private getTasksCursorUC = new GetTasksCursorUseCase(this.taskRepo);
+  private getTaskByIdUC = new GetTaskByIdUseCase(this.taskRepo);
 
   // POST /tasks
-  async create(req: Request<{}, {}, TCreateTaskDto>, res: Response) {
-    const dto = req.body;
-    const task = await this.createTaskUseCase.execute({
-      title: dto.title.trim(),
-      description: dto.description?.trim(),
-      status: dto.status,
-      userId: dto.userId,
-      projectId: dto.projectId,
-    });
-    res.status(201).json(task);
+  async create(
+    req: Request<{}, {}, TCreateTaskDto>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const created = await this.createTaskEC.execute(req.body);
+      return res.status(201).json(created);
+    } catch (err) {
+      return next(err);
+    }
   }
 
-  // GET /tasks
-  async findAll(_req: Request<{}, {}, {}, TTaskQueryDto>, res: Response) {
-    const tasks = await this.taskRepo.findAll();
-    res.status(200).json(tasks);
+  // / GET / tasks(offset)
+  async findAll(
+    req: Request<{}, {}, {}, TTaskOffsetPagination>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const page = await this.getTasksOffsetUC.execute(req.query);
+      return res.status(200).json(page);
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  // GET /tasks/cursor
+  async findAllCursor(
+    req: Request<{}, {}, {}, TTaskCursorPagination>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const page: CursorPage<Task, CursorSortBy> =
+        await this.getTasksCursorUC.execute(req.query);
+      return res.status(200).json(page);
+    } catch (err) {
+      return next(err);
+    }
   }
 
   // GET /tasks/:id
-  async findById(req: Request<TTaskParamsDto>, res: Response) {
-    const task = await this.taskRepo.findById(req.params.id);
-    if (!task) return res.status(404).json({ error: "Not found" });
-    res.status(200).json(task);
+  async findById(
+    req: Request<TTaskParamsDto>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const task = await this.getTaskByIdUC.execute({ id: req.params.id });
+      return res.status(200).json(task);
+    } catch (err) {
+      return next(err);
+    }
   }
 
   // PATCH /tasks/:id
   async update(
     req: Request<TTaskParamsDto, {}, TUpdateTaskDto>,
     res: Response,
+    next: NextFunction,
   ) {
-    const { id } = req.params;
-    const dto = req.body;
-    const result = await this.updateTaskUseCase.execute(id, {
-      title: dto.title?.trim(),
-      description: dto.description?.trim(),
-      status: dto.status,
-      userId: dto.userId,
-      projectId: dto.projectId,
-    });
-    res.status(200).json(result);
+    try {
+      const { id } = req.params;
+      const dto = req.body;
+
+      const result = await this.updateTaskUC.execute(id, {
+        title: dto.title?.trim(),
+        description: dto.description?.trim(),
+        status: dto.status,
+        userId: dto.userId,
+        projectId: dto.projectId,
+      });
+
+      return res.status(200).json(result);
+    } catch (err) {
+      return next(err);
+    }
   }
 
   // POST /tasks/:id/complete
-  async complete(req: Request<TTaskParamsDto>, res: Response) {
-    const completedAt = new Date();
-    await this.completeTaskUseCase.execute(req.params.id, completedAt);
-    res.status(200).json({ completedAt: completedAt.toISOString() });
+  async complete(
+    req: Request<TTaskParamsDto>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const completedAt = new Date();
+      await this.completeTaskUC.execute(req.params.id, completedAt);
+      return res.status(200).json({ completedAt: completedAt.toISOString() });
+    } catch (err) {
+      return next(err);
+    }
   }
 
   // DELETE /tasks/:id?hard=true
-  async delete(req: Request<TTaskParamsDto, {}, DeleteQuery>, res: Response) {
-    // const hard = req.query.hard === "true";
-    await this.deleteTaskUseCase.execute({ taskId: req.params.id, hard: true });
-    res.sendStatus(204); // 204 is preferred for successful delete without a response body
+  async delete(
+    req: Request<TTaskParamsDto, {}, DeleteQuery>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      // Adjust policy as needed; currently always hard delete for parity with users example
+      await this.deleteTaskUC.execute({
+        taskId: req.params.id,
+        hard: true,
+      });
+      return res.sendStatus(204);
+    } catch (err) {
+      return next(err);
+    }
   }
 }

@@ -1,260 +1,320 @@
-// tests/controllers/user.controller.spec.ts
+// user.controller.spec.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Request, Response, NextFunction } from "express";
 import { UserController } from "../user.controller";
 
-// Minimal Express req/res/next helpers
-function mockReq<TBody = any, TParams = any, TQuery = any>(
-  data: Partial<Request<TParams, any, TBody, TQuery>> = {},
-) {
-  return {
-    params: {} as any,
-    body: {} as any,
-    query: {} as any,
-    ...data,
-  } as unknown as Request<TParams, any, TBody, TQuery>;
-}
-
+// helpers for Express mocks
 function mockRes() {
-  const res = {
-    status: vi.fn().mockReturnThis(),
-    json: vi.fn().mockReturnThis(),
-    send: vi.fn().mockReturnThis(),
-  } as unknown as Response;
-  return res;
+  const res: any = {};
+  res.status = vi.fn().mockReturnThis();
+  res.json = vi.fn().mockReturnThis();
+  res.send = vi.fn().mockReturnThis();
+  return res as any;
 }
-
 function mockNext() {
-  return vi.fn() as unknown as NextFunction;
+  return vi.fn();
 }
 
 describe("UserController", () => {
   let controller: UserController;
 
   beforeEach(() => {
-    vi.restoreAllMocks();
     controller = new UserController();
   });
 
   describe("create", () => {
-    it("201 and returns created user", async () => {
-      const req = mockReq({ body: { email: "a@b.com", name: "A" } });
+    it("returns 201 with created user", async () => {
+      const req: any = { body: { email: "a@b.com", name: "Alice" } };
       const res = mockRes();
       const next = mockNext();
 
-      const execute = vi.fn().mockResolvedValue({ id: "u1" });
-      vi.spyOn(controller as any, "createUserUseCase", "get").mockReturnValue({ execute });
+      // stub the use case
+      (controller as any).createUserUC = {
+        execute: vi
+          .fn()
+          .mockResolvedValue({ id: "u1", email: "a@b.com", name: "Alice" }),
+      };
 
-      await controller.create(req as any, res as any, next);
+      await controller.create(req, res, next);
 
-      expect(execute).toHaveBeenCalledWith({ email: "a@b.com", name: "A" });
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ id: "u1" });
-      expect(next).not.toHaveBeenCalled();
+      expect((controller as any).createUserUC.execute).toHaveBeenCalledWith(
+        req.body,
+      ); // success path call
+      expect(res.status).toHaveBeenCalledWith(201); // returns 201
+      expect(res.json).toHaveBeenCalledWith({
+        id: "u1",
+        email: "a@b.com",
+        name: "Alice",
+      }); // returns body
+      expect(next).not.toHaveBeenCalled(); // no error
     });
 
-    it("calls next on error", async () => {
-      const req = mockReq({ body: { email: "a@b.com", name: "A" } });
+    it("delegates to next on error", async () => {
+      const req: any = { body: { email: "x@y.com", name: "X" } };
       const res = mockRes();
       const next = mockNext();
+      const boom = new Error("fail");
 
-      const error = new Error("boom");
-      const execute = vi.fn().mockRejectedValue(error);
-      vi.spyOn(controller as any, "createUserUseCase", "get").mockReturnValue({ execute });
+      (controller as any).createUserUC = {
+        execute: vi.fn().mockRejectedValue(boom),
+      };
 
-      await controller.create(req as any, res as any, next);
+      await controller.create(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(error);
+      expect(next).toHaveBeenCalledWith(boom); // error path calls next
     });
   });
 
-  describe("findAll", () => {
-    it("200 and returns paginated list", async () => {
-      const req = mockReq({ query: { limit: 20, offset: 0, sortBy: "createdAt", sortDir: "desc", includeDeleted: false } });
+  describe("findAll (offset)", () => {
+    it("returns 200 with paginated result", async () => {
+      const req: any = {
+        query: {
+          q: "ali",
+          limit: 10,
+          offset: 0,
+          includeDeleted: false,
+          sortBy: "createdAt",
+          sortDir: "desc",
+        },
+      };
       const res = mockRes();
       const next = mockNext();
+      const payload = { total: 1, items: [{ id: "u1" }] };
 
-      const page = {
-        data: [{ id: "u1" }],
-        total: 1,
-        limit: 20,
-        offset: 0,
-        sortBy: "createdAt",
-        sortDir: "desc",
+      (controller as any).getUsersOffsetUC = {
+        execute: vi.fn().mockResolvedValue(payload),
       };
-      const findAll = vi.fn().mockResolvedValue(page);
-      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findAll });
 
-      await controller.findAll(req as any, res as any, next);
+      await controller.findAll(req, res, next);
 
-      expect(findAll).toHaveBeenCalledWith({
-        q: undefined,
-        limit: 20,
-        offset: 0,
-        includeDeleted: false,
-        sortBy: "createdAt",
-        sortDir: "desc",
-      });
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(page);
-      expect(next).not.toHaveBeenCalled();
+      expect((controller as any).getUsersOffsetUC.execute).toHaveBeenCalledWith(
+        req.query,
+      ); // forwards query params [web:4]
+      expect(res.status).toHaveBeenCalledWith(200); // OK
+      expect(res.json).toHaveBeenCalledWith(payload); // body
     });
 
-    it("calls next on error", async () => {
-      const req = mockReq({ query: {} });
+    it("next(err) on UC error", async () => {
+      const req: any = { query: {} };
       const res = mockRes();
       const next = mockNext();
+      const boom = new Error("db");
 
-      const err = new Error("db");
-      const findAll = vi.fn().mockRejectedValue(err);
-      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findAll });
+      (controller as any).getUsersOffsetUC = {
+        execute: vi.fn().mockRejectedValue(boom),
+      };
 
-      await controller.findAll(req as any, res as any, next);
-      expect(next).toHaveBeenCalledWith(err);
+      await controller.findAll(req, res, next);
+      expect(next).toHaveBeenCalledWith(boom); // bubbled error
+    });
+  });
+
+  describe("findAllCursor", () => {
+    it("returns 200 with cursor result", async () => {
+      const req: any = {
+        query: {
+          q: "ali",
+          take: 2,
+          cursor: "u1",
+          includeDeleted: false,
+          sortBy: "createdAt",
+          sortDir: "asc",
+        },
+      };
+      const res = mockRes();
+      const next = mockNext();
+      const payload = { items: [{ id: "u2" }], nextCursor: "u2" };
+
+      (controller as any).getUsersCursorUC = {
+        execute: vi.fn().mockResolvedValue(payload),
+      };
+
+      await controller.findAllCursor(req, res, next);
+
+      expect((controller as any).getUsersCursorUC.execute).toHaveBeenCalledWith(
+        req.query,
+      ); // forwards query [web:4]
+      expect(res.status).toHaveBeenCalledWith(200); // OK
+      expect(res.json).toHaveBeenCalledWith(payload); // body
     });
   });
 
   describe("delete", () => {
-    it("204 and calls hard delete", async () => {
-      const req = mockReq({ params: { id: "u1" } });
+    it("returns 204 on success with hard=true", async () => {
+      const req: any = { params: { id: "u1" } };
       const res = mockRes();
       const next = mockNext();
 
-      const execute = vi.fn().mockResolvedValue(undefined);
-      vi.spyOn(controller as any, "deleteUserUseCase", "get").mockReturnValue({ execute });
+      (controller as any).deleteUserUC = {
+        execute: vi.fn().mockResolvedValue(undefined),
+      };
 
-      await controller.delete(req as any, res as any, next);
+      await controller.delete(req, res, next);
 
-      expect(execute).toHaveBeenCalledWith({ userId: "u1", hard: true });
-      expect(res.status).toHaveBeenCalledWith(204);
-      expect(res.send).toHaveBeenCalled();
-      expect(next).not.toHaveBeenCalled();
+      expect((controller as any).deleteUserUC.execute).toHaveBeenCalledWith({
+        userId: "u1",
+        hard: true,
+      }); // hard true [web:4]
+      expect(res.status).toHaveBeenCalledWith(204); // No Content
+      expect(res.send).toHaveBeenCalled(); // empty body
     });
 
-    it("calls next on error", async () => {
-      const req = mockReq({ params: { id: "u1" } });
+    it("next(err) on UC error", async () => {
+      const req: any = { params: { id: "u1" } };
       const res = mockRes();
       const next = mockNext();
+      const boom = new Error("fail");
 
-      const err = new Error("boom");
-      const execute = vi.fn().mockRejectedValue(err);
-      vi.spyOn(controller as any, "deleteUserUseCase", "get").mockReturnValue({ execute });
+      (controller as any).deleteUserUC = {
+        execute: vi.fn().mockRejectedValue(boom),
+      };
 
-      await controller.delete(req as any, res as any, next);
-      expect(next).toHaveBeenCalledWith(err);
+      await controller.delete(req, res, next);
+      expect(next).toHaveBeenCalledWith(boom); // error
     });
   });
 
   describe("update", () => {
-    it("200 and returns changed keys", async () => {
-      const req = mockReq({
-        params: { id: "u1" },
-        body: { email: "a@b.com", name: "Alice" },
-      });
+    it("returns 422 when body has no fields", async () => {
+      const req: any = { params: { id: "u1" }, body: {} };
       const res = mockRes();
       const next = mockNext();
 
-      const update = vi.fn().mockResolvedValue({ changed: { name: "Alice" } });
-      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ update });
+      await controller.update(req, res, next);
 
-      await controller.update(req as any, res as any, next);
-
-      expect(update).toHaveBeenCalledWith("u1", { email: "a@b.com", name: "Alice" });
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ id: "u1", changed: { name: "Alice" } });
-      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(422); // validation failure mapping
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: expect.any(String),
+          message: expect.stringContaining("at least one"),
+        }),
+      ); // error details
+      expect(next).not.toHaveBeenCalled(); // handled response
     });
 
-    it("calls next on error", async () => {
-      const req = mockReq({ params: { id: "u1" }, body: { email: "a@b.com", name: "Alice" } });
+    it("returns 200 on valid patch", async () => {
+      const req: any = { params: { id: "u1" }, body: { name: "New" } };
       const res = mockRes();
       const next = mockNext();
 
-      const err = new Error("db");
-      const update = vi.fn().mockRejectedValue(err);
-      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ update });
+      (controller as any).updateUserUC = {
+        execute: vi.fn().mockResolvedValue({ success: true }),
+      };
 
-      await controller.update(req as any, res as any, next);
-      expect(next).toHaveBeenCalledWith(err);
+      await controller.update(req, res, next);
+
+      expect((controller as any).updateUserUC.execute).toHaveBeenCalledWith({
+        userId: "u1",
+        patch: { email: undefined, name: "New" },
+      }); // passes patch fields [web:4]
+      expect(res.status).toHaveBeenCalledWith(200); // OK
+      expect(res.json).toHaveBeenCalledWith({ success: true }); // body
+    });
+
+    it("next(err) on UC error", async () => {
+      const req: any = { params: { id: "u1" }, body: { email: "e@x.com" } };
+      const res = mockRes();
+      const next = mockNext();
+      const boom = new Error("conflict");
+
+      (controller as any).updateUserUC = {
+        execute: vi.fn().mockRejectedValue(boom),
+      };
+
+      await controller.update(req, res, next);
+      expect(next).toHaveBeenCalledWith(boom); // error path
     });
   });
 
   describe("findById", () => {
-    it("404 when not found", async () => {
-      const req = mockReq({ params: { id: "u1" } });
+    it("returns 200 with user when found", async () => {
+      const req: any = { params: { id: "u1" } };
       const res = mockRes();
       const next = mockNext();
 
-      const findById = vi.fn().mockResolvedValue(null);
-      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findById });
+      (controller as any).getUserByIdUC = {
+        execute: vi.fn().mockResolvedValue({ id: "u1" }),
+      };
 
-      await controller.findById(req as any, res as any, next);
+      await controller.findById(req, res, next);
 
-      expect(findById).toHaveBeenCalledWith("u1");
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ error: "User not found" });
-      expect(next).not.toHaveBeenCalled();
+      expect((controller as any).getUserByIdUC.execute).toHaveBeenCalledWith({
+        id: "u1",
+      }); // forwards id [web:4]
+      expect(res.status).toHaveBeenCalledWith(200); // OK
+      expect(res.json).toHaveBeenCalledWith({ id: "u1" }); // user
     });
 
-    it("200 and returns user", async () => {
-      const user = { id: "u1", email: "a@b.com", name: "Alice" };
-      const req = mockReq({ params: { id: "u1" } });
+    it("next(NotFound) when missing", async () => {
+      const req: any = { params: { id: "u1" } };
       const res = mockRes();
       const next = mockNext();
 
-      const findById = vi.fn().mockResolvedValue(user);
-      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findById });
+      (controller as any).getUserByIdUC = {
+        execute: vi.fn().mockResolvedValue(null),
+      };
 
-      await controller.findById(req as any, res as any, next);
+      await controller.findById(req, res, next);
 
-      expect(findById).toHaveBeenCalledWith("u1");
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(user);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(Error)); // DomainError forwarded
     });
 
-    it("calls next on error", async () => {
-      const req = mockReq({ params: { id: "u1" } });
+    it("next(err) on UC error", async () => {
+      const req: any = { params: { id: "u1" } };
       const res = mockRes();
       const next = mockNext();
+      const boom = new Error("db");
 
-      const err = new Error("db");
-      const findById = vi.fn().mockRejectedValue(err);
-      vi.spyOn(controller as any, "userRepo", "get").mockReturnValue({ findById });
+      (controller as any).getUserByIdUC = {
+        execute: vi.fn().mockRejectedValue(boom),
+      };
 
-      await controller.findById(req as any, res as any, next);
-      expect(next).toHaveBeenCalledWith(err);
+      await controller.findById(req, res, next);
+      expect(next).toHaveBeenCalledWith(boom); // error path
     });
   });
 
   describe("reactivate", () => {
-    it("200 and returns user from use case", async () => {
-      const req = mockReq<{ email: string }>({ body: { email: "a@b.com" } });
+    it("next(VALIDATION_FAILED) when email missing", async () => {
+      const req: any = { body: {} };
       const res = mockRes();
       const next = mockNext();
 
-      const execute = vi.fn().mockResolvedValue({ id: "u1", email: "a@b.com", active: true });
-      vi.spyOn(controller as any, "reactivateUserUseCase", "get").mockReturnValue({ execute });
+      await controller.reactivate(req, res, next);
 
-      await controller.reactivate(req as any, res as any, next);
-
-      expect(execute).toHaveBeenCalledWith("a@b.com");
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ id: "u1", email: "a@b.com", active: true });
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(Error)); // validation error bubbled via next
     });
 
-    it("calls next on error", async () => {
-      const req = mockReq<{ email: string }>({ body: { email: "a@b.com" } });
+    it("returns 200 with user on success", async () => {
+      const req: any = { body: { email: "a@b.com" } };
       const res = mockRes();
       const next = mockNext();
+      const user = { id: "u1", email: "a@b.com" };
 
-      const err = new Error("boom");
-      const execute = vi.fn().mockRejectedValue(err);
-      vi.spyOn(controller as any, "reactivateUserUseCase", "get").mockReturnValue({ execute });
+      (controller as any).reactivateUserUC = {
+        execute: vi.fn().mockResolvedValue(user),
+      };
 
-      await controller.reactivate(req as any, res as any, next);
-      expect(next).toHaveBeenCalledWith(err);
+      await controller.reactivate(req, res, next);
+
+      expect((controller as any).reactivateUserUC.execute).toHaveBeenCalledWith(
+        "a@b.com",
+      ); // forwards email [web:4]
+      expect(res.status).toHaveBeenCalledWith(200); // OK
+      expect(res.json).toHaveBeenCalledWith(user); // body
+    });
+
+    it("next(err) on UC error", async () => {
+      const req: any = { body: { email: "a@b.com" } };
+      const res = mockRes();
+      const next = mockNext();
+      const boom = new Error("oops");
+
+      (controller as any).reactivateUserUC = {
+        execute: vi.fn().mockRejectedValue(boom),
+      };
+
+      await controller.reactivate(req, res, next);
+      expect(next).toHaveBeenCalledWith(boom); // error
     });
   });
 });

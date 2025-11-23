@@ -12,11 +12,13 @@ export function mockReq<TBody = any, TParams = any, TQuery = any>(
   } as unknown as Request<TParams, any, TBody, TQuery>;
 }
 
-export function mockRes() {
+export function mockRes<ResBody = any>() {
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
-  } as unknown as Response;
+    sendStatus: vi.fn().mockReturnThis(), // add this line
+    setHeader: vi.fn().mockReturnThis(),
+  } as unknown as Response<ResBody>;
   return res;
 }

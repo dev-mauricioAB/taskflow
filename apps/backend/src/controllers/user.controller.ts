@@ -2,28 +2,43 @@ import { NextFunction, Request, Response } from "express";
 import {
   CreateUserUseCase,
   DeleteUserUseCase,
+  GetUserByIdUseCase,
+  GetUsersCursorUseCase,
+  GetUsersOffsetUseCase,
   ReactivateUserUseCase,
+  UpdateUserUseCase,
 } from "@repo/core";
 import { DomainError, eventBusPublisher, UserRepository } from "@repo/infra";
 import {
   TUpdateUserDto,
   TUserParamsDto,
   TCreateUserDto,
-  TUserListOffsetQuery,
-  TUserListCursorQuery,
+  TUserCursorPagination,
+  TUserOffsetPagination,
 } from "@repo/shared";
 
 export class UserController {
   private userRepo = new UserRepository();
-  private createUserUseCase = new CreateUserUseCase(
+
+  // Commands (publish events)
+  private createUserUC = new CreateUserUseCase(
     this.userRepo,
     eventBusPublisher,
   );
-  private deleteUserUseCase = new DeleteUserUseCase(
+  private deleteUserUC = new DeleteUserUseCase(
     this.userRepo,
     eventBusPublisher,
   );
-  private reactivateUserUseCase = new ReactivateUserUseCase(this.userRepo);
+  private updateUserUC = new UpdateUserUseCase(
+    this.userRepo,
+    eventBusPublisher,
+  );
+
+  // Queries (no events)
+  private reactivateUserUC = new ReactivateUserUseCase(this.userRepo);
+  private getUsersOffsetUC = new GetUsersOffsetUseCase(this.userRepo);
+  private getUsersCursorUC = new GetUsersCursorUseCase(this.userRepo);
+  private getUserByIdUC = new GetUserByIdUseCase(this.userRepo);
 
   // POST /users
   async create(
@@ -32,22 +47,22 @@ export class UserController {
     next: NextFunction,
   ) {
     try {
-      const user = await this.createUserUseCase.execute(req.body);
+      const user = await this.createUserUC.execute(req.body);
       return res.status(201).json(user);
     } catch (err) {
       return next(err);
     }
   }
 
-  // GET /users
+  // GET /users (offset)
   async findAll(
-    req: Request<{}, {}, {}, TUserListOffsetQuery>,
+    req: Request<{}, {}, {}, TUserOffsetPagination>,
     res: Response,
     next: NextFunction,
   ) {
     try {
       const { q, limit, offset, includeDeleted, sortBy, sortDir } = req.query;
-      const result = await this.userRepo.findAll({
+      const result = await this.getUsersOffsetUC.execute({
         q,
         limit,
         offset,
@@ -62,25 +77,21 @@ export class UserController {
   }
 
   // GET /users/cursor
-  // Cursor pagination
   async findAllCursor(
-    req: Request<{}, {}, {}, TUserListCursorQuery>,
+    req: Request<{}, {}, {}, TUserCursorPagination>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const { q, take, cursor, includeDeleted, sortBy, sortDir } =
-        req.query;
-
-      const result = await this.userRepo.findAllCursor({
+      const { q, take, cursor, includeDeleted, sortBy, sortDir } = req.query;
+      const result = await this.getUsersCursorUC.execute({
         q,
         take,
-        cursor,
+        cursor, // union string | { id } accepted by UC
         includeDeleted,
         sortBy,
         sortDir,
       });
-
       res.status(200).json(result);
     } catch (err) {
       next(err);
@@ -96,7 +107,7 @@ export class UserController {
     try {
       const { id } = req.params;
       // Decide soft vs hard delete policy; example uses hard: true as earlier
-      await this.deleteUserUseCase.execute({ userId: id, hard: true });
+      await this.deleteUserUC.execute({ userId: id, hard: true });
       return res.status(204).send();
     } catch (err) {
       return next(err);
@@ -113,10 +124,12 @@ export class UserController {
       const { id } = req.params;
       const { email, name } = req.body;
 
-      // Repository should ignore undefined fields and trim where appropriate
-      const { changed } = await this.userRepo.update(id, { email, name });
+      const result = await this.updateUserUC.execute({
+        userId: id,
+        patch: { email, name },
+      });
 
-      return res.status(200).json({ id, changed });
+      return res.status(200).json(result); // { success: true }
     } catch (err) {
       return next(err);
     }
@@ -130,12 +143,12 @@ export class UserController {
   ) {
     try {
       const { id } = req.params;
-
-      const user = await this.userRepo.findById(id);
+      const user = await this.getUserByIdUC.execute({ id });
       if (!user) {
-        return next(new DomainError({ code: "NOT_FOUND", message: "User not found" }));
+        return next(
+          new DomainError({ code: "NOT_FOUND", message: "User not found" }),
+        );
       }
-
       return res.status(200).json(user);
     } catch (err) {
       return next(err);
@@ -152,11 +165,16 @@ export class UserController {
       const { email } = req.body;
 
       if (!email) {
-        return next(new DomainError({ code: "VALIDATION_FAILED", message: "Email is required for reactivation" }));
+        return next(
+          new DomainError({
+            code: "VALIDATION_FAILED",
+            message: "Email is required for reactivation",
+          }),
+        );
       }
 
       // Note: in a real app, verify email ownership (OTP/magic link) before reactivation.
-      const user = await this.reactivateUserUseCase.execute(email);
+      const user = await this.reactivateUserUC.execute(email);
 
       return res.status(200).json(user);
     } catch (err) {
