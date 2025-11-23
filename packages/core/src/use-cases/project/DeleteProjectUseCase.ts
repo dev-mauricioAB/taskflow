@@ -25,7 +25,7 @@ export class DeleteProjectUseCase {
     if (!existing)
       throw new DomainError({
         code: "NOT_FOUND",
-        message: "Activity not found",
+        message: "Project not found",
       });
 
     const nowIso = new Date().toISOString();

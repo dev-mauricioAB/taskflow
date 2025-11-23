@@ -1,4 +1,3 @@
-// @repo/core/application/use-cases/CreateProjectUseCase.ts
 import {
   DomainError,
   IEventPublisher,
@@ -26,7 +25,7 @@ export class CreateProjectUseCase {
     const payload: ProjectCreatedPayload = {
       projectId: project.id,
       // adjust to your Project model; if ownerId/teamId exists, include it
-      ownerId: (project as any).ownerId ?? "",
+      ownerId: project.ownerId ?? "",
       name: project.name,
       createdAt: project.createdAt.toISOString(),
     };
