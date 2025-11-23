@@ -63,8 +63,5 @@ export interface IRepository<T, ID> {
    */
   exists(userId: string): Promise<boolean>;
   isSoftDeleted(userId: string): Promise<boolean>;
-  update(
-    userId: string,
-    patch: NewEntity<Partial<T>>,
-  ): Promise<{ changed: Record<string, unknown> }>;
+  update(userId: string, patch: NewEntity<Partial<T>>): Promise<Partial<T>>;
 }

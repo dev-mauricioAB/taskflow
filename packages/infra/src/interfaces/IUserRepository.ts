@@ -5,7 +5,7 @@ import {
   OffsetListParams,
   OffsetPage,
   User,
-  UserCursorSortBy,
+  CursorSortBy,
   UserSortBy,
 } from "@repo/shared";
 
@@ -16,8 +16,8 @@ export interface IUserRepository extends IRepository<User, string> {
   ): Promise<OffsetPage<User, UserSortBy>>;
   // Cursor-based
   findAllCursor(
-    params: CursorListParams<UserCursorSortBy>,
-  ): Promise<CursorPage<User, UserCursorSortBy>>;
+    params: CursorListParams<CursorSortBy>,
+  ): Promise<CursorPage<User, CursorSortBy>>;
   reactivate(userId: string): Promise<User>;
   findByEmail(email: string): Promise<User | null>;
 }

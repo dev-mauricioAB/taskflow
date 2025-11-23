@@ -5,23 +5,23 @@ export type DomainErrorProps = {
   message: string;
   details?: Record<string, unknown>;
   cause?: unknown;
+  status?: number; // optional; web layer can fallback using ERROR_CODE_TO_STATUS
 };
 
 export class DomainError extends Error {
   public readonly code: ErrorCode;
   public readonly details?: Record<string, unknown>;
   public readonly cause?: unknown;
+  public readonly status?: number;
 
   constructor(props: DomainErrorProps) {
     super(props.message);
-    Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+    Object.setPrototypeOf(this, new.target.prototype);
     this.name = "DomainError";
     this.code = props.code;
     this.details = props.details;
     this.cause = props.cause;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, DomainError);
-    }
+    this.status = props.status;
   }
 
   toJSON() {

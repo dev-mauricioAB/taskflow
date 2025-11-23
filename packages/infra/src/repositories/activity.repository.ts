@@ -1,37 +1,53 @@
 import { prisma } from "../database/prisma.client";
 import { Activity, TCreateActivityDto, TUpdateActivityDto } from "@repo/shared";
-import { IActivityRepository, NewEntity } from "../interfaces";
+import {
+  IActivityRepository,
+  NewEntity,
+  ActivityFindManyFilter,
+} from "../interfaces";
+import { DomainError } from "../errors";
+import { HandleAllPrismaErrors } from "../database/decorators/handle-prisma-errors";
 
+@HandleAllPrismaErrors
 export class ActivityRepository implements IActivityRepository {
   async create(dto: TCreateActivityDto): Promise<Activity> {
+    const user = await prisma.user.findUnique({ where: { id: dto.actorId } });
+    if (!user) {
+      throw new DomainError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+    const task = await prisma.task.findUnique({ where: { id: dto.taskId } });
+    if (!task) {
+      throw new DomainError({
+        code: "NOT_FOUND",
+        message: "Task not found",
+      });
+    }
+
     const data: NewEntity<Activity> = {
       taskId: dto.taskId,
       actorId: dto.actorId,
       type: dto.type,
       message: dto.message?.trim(),
     };
-    // DB sets createdAt via @default(now()); do not pass createdAt here
-    return prisma.activity.create({ data }); // returns Activity with id/createdAt
+    return prisma.activity.create({ data });
   }
 
   async save(activity: Activity): Promise<void> {
-    // If immutable, you could throw here. If mutable, restrict to message:
     await prisma.activity.update({
       where: { id: activity.id },
       data: { message: activity.message },
-    }); // Avoid changing actorId/taskId/type/createdAt.
-  }
-
-  async delete(id: string): Promise<void> {
-    // Optionally check existence first to avoid throwing on missing ids
-    await prisma.activity.delete({ where: { id } }).catch((e) => {
-      // Swallow not found to keep "idempotent" contract, or rethrow based on your policy
-      if (e.code !== "P2025") throw e;
     });
   }
 
+  async delete(id: string): Promise<void> {
+    await prisma.activity.delete({ where: { id } })
+  }
+
   async findById(id: string): Promise<Activity | null> {
-    return prisma.activity.findUnique({ where: { id, deletedAt: null } });
+    return prisma.activity.findFirst({ where: { id, deletedAt: null } });
   }
 
   async findActivityByTaskId(id: string): Promise<Activity[]> {
@@ -41,8 +57,21 @@ export class ActivityRepository implements IActivityRepository {
     });
   }
 
+  async findMany(filter: ActivityFindManyFilter): Promise<Activity[]> {
+    const where: any = { deletedAt: null };
+
+    // Apply optional filters; Prisma ignores undefined fields
+    if (filter.taskId !== undefined) where.taskId = filter.taskId;
+    if (filter.actorId !== undefined) where.actorId = filter.actorId;
+    if (filter.type !== undefined) where.type = filter.type;
+
+    return prisma.activity.findMany({
+      where,
+      orderBy: { createdAt: "desc" }, // newest first for general queries
+    });
+  }
+
   async softDelete(activityId: string, when: Date): Promise<boolean> {
-    // Only if your Activity model has deletedAt; otherwise remove this method
     const res = await prisma.activity.updateMany({
       where: { id: activityId, deletedAt: null },
       data: { deletedAt: when },
@@ -64,38 +93,27 @@ export class ActivityRepository implements IActivityRepository {
   }
 
   async isSoftDeleted(activityId: string): Promise<boolean> {
-    // Only meaningful if you have deletedAt
     const row = await prisma.activity.findUnique({
       where: { id: activityId },
       select: { deletedAt: true },
     });
-    return !!(row as any)?.deletedAt;
+    return !!row?.deletedAt;
   }
 
   async update(
     activityId: string,
     dto: TUpdateActivityDto,
-  ): Promise<{ changed: Record<string, unknown> }> {
-    const patch = {} as NewEntity<Activity>;
-    if (dto.message !== undefined) patch.message = dto.message?.trim();
-
-    if (Object.keys(patch).length === 0) return { changed: {} };
-
+  ): Promise<TUpdateActivityDto> {
     const updated = await prisma.activity.update({
       where: { id: activityId },
-      data: patch,
+      data: dto,
       select: {
         id: true,
         message: true,
-        createdAt: true, // immutable reference timestamp
+        createdAt: true,
       },
     });
 
-    const changed: Record<string, unknown> = {};
-    for (const k of Object.keys(patch)) {
-      if (k in updated) changed[k] = (updated as any)[k];
-    }
-    // No updatedAt if activities are immutable; omit unless your model has it
-    return { changed };
+    return updated;
   }
 }

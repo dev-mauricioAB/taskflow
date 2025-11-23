@@ -1,26 +1,28 @@
 import { prisma } from "../database/prisma.client";
 import {
   CursorPage,
-  OffsetListParams,
   OffsetPage,
-  TCreateUserDto,
-  TCursorPagination,
-  TOffsetPagination,
-  TUpdateUserDto,
+  type TCreateUserDto,
+  type TUserCursorPagination,
+  type TUserOffsetPagination,
+  type TUpdateUserDto,
   User,
-  UserCursorSortBy,
+  CursorSortBy,
   UserSortBy,
 } from "@repo/shared";
 import { IUserRepository } from "../interfaces/IUserRepository";
 import { Prisma } from "@prisma/client";
+import { DomainError } from "../errors";
+import { HandleAllPrismaErrors } from "../database/decorators/handle-prisma-errors";
 
+@HandleAllPrismaErrors
 export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<User | null> {
     return prisma.user.findUnique({ where: { id } });
   }
 
   async findAll(
-    params: TOffsetPagination,
+    params: TUserOffsetPagination,
   ): Promise<OffsetPage<User, UserSortBy>> {
     const {
       q,
@@ -67,8 +69,8 @@ export class UserRepository implements IUserRepository {
   }
 
   async findAllCursor(
-    params: TCursorPagination,
-  ): Promise<CursorPage<User, UserCursorSortBy>> {
+    params: TUserCursorPagination,
+  ): Promise<CursorPage<User, CursorSortBy>> {
     const {
       q,
       take = 20, // positive forward, negative backward
@@ -129,27 +131,21 @@ export class UserRepository implements IUserRepository {
     return !!row?.deletedAt;
   }
 
-  async save(user: User): Promise<void> {
+  async save(user: {
+    id?: string;
+    name: string;
+    email: string;
+  }): Promise<void> {
     if (user.id) {
       await prisma.user.update({
         where: { id: user.id },
-        data: {
-          // include only mutable fields from your schema
-          name: user.name,
-          email: user.email,
-          // ...any other updatable fields
-        },
+        data: { name: user.name, email: user.email },
       });
       return;
     }
 
-    // If your schema generates id (uuid/autoincrement), avoid passing id
     await prisma.user.create({
-      data: {
-        // map only creatable fields; omit id if defaulted by DB
-        name: user.name,
-        email: user.email,
-      },
+      data: { name: user.name, email: user.email },
     });
   }
 
@@ -158,7 +154,6 @@ export class UserRepository implements IUserRepository {
   }
 
   async create(user: TCreateUserDto): Promise<User> {
-    // Same guidance: omit id if DB generates it
     return prisma.user.create({
       data: {
         name: user.name,
@@ -167,45 +162,14 @@ export class UserRepository implements IUserRepository {
     });
   }
 
-  async update(
-    userId: string,
-    patch: TUpdateUserDto,
-  ): Promise<{ changed: Record<string, unknown> }> {
-    // 1) Sanitize and normalize what you will send to Prisma
-    const safeData = {
-      email: typeof patch.email === "string" ? patch.email.trim() : undefined,
-      name: typeof patch.name === "string" ? patch.name.trim() : undefined,
-      // do not set updatedAt manually if your schema uses @updatedAt
-    };
-
-    // 2) Compute intended keys from what you will actually send (undefined fields are ignored by Prisma)
-    const intended = (
-      Object.keys(safeData) as (keyof typeof safeData)[]
-    ).filter((k) => safeData[k] !== undefined);
-
-    if (intended.length === 0) {
-      return { changed: {} };
-    }
-
-    // 3) Perform the update and select only fields you may return
+  async update(userId: string, patch: TUpdateUserDto): Promise<TUpdateUserDto> {
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: safeData,
+      data: patch,
       select: { id: true, name: true, email: true, updatedAt: true },
     });
 
-    // 4) Safe indexing: narrow keys to the actual keys of `updated`
-    const isUpdatedKey = (k: PropertyKey): k is keyof typeof updated =>
-      k in updated;
-
-    const changed: Record<string, unknown> = {};
-    for (const key of intended) {
-      if (isUpdatedKey(key)) {
-        changed[key as string] = updated[key];
-      }
-    }
-
-    return { changed };
+    return updated;
   }
 
   async softDelete(userId: string, when: Date): Promise<boolean> {
@@ -224,26 +188,24 @@ export class UserRepository implements IUserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const normalized = email.trim().toLowerCase(); // keep normalization consistent with use case [web:22]
     return prisma.user.findFirst({
-      where: { email: normalized },
+      where: { email },
     });
   }
 
   // Clears soft-delete and returns the (now active) user; idempotent
   async reactivate(userId: string): Promise<User> {
-    // First, attempt to clear deletedAt only if currently soft-deleted
-    const res = await prisma.user.updateMany({
+    // If nothing changed, either user doesn't exist or is already active; fetch to disambiguate
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new DomainError({ code: "NOT_FOUND", message: "User not found" });
+    }
+
+    await prisma.user.updateMany({
       where: { id: userId, deletedAt: { not: null } },
       data: { deletedAt: null },
     });
 
-    // If nothing changed, either user doesn't exist or is already active; fetch to disambiguate
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      // Prefer throwing a domain-level not-found higher up; repository returns a technical error or null per your conventions
-      throw new Error("User not found"); // map to DomainError.NotFound in the use case layer if desired [web:30][web:33]
-    }
     return user;
   }
 }
