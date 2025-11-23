@@ -10,7 +10,10 @@
     "test": "turbo run test",
     "test:projects": "vitest run",
     "test:projects:watch": "vitest --watch",
-    "view-report": "turbo run view-report"
+    "view-report": "turbo run view-report",
+    "run:backend": "turbo run dev --filter=backend",
+    "run:frontend": "turbo run dev --filter=frontend",
+    "bd:deps": "turbo run build --filter=@repo/infra... --filter=@repo/shared... --filter=@repo/core..."
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.91.2",
