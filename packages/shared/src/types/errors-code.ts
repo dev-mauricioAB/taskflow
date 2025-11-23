@@ -6,6 +6,7 @@ export const ERROR_CODES = {
   CONFLICT: "CONFLICT",
   RATE_LIMITED: "RATE_LIMITED",
   EMAIL_IN_USE: "EMAIL_IN_USE",
+  INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

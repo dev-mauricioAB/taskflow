@@ -1,4 +1,4 @@
-export type SortDir = "asc" | "desc";
+import { SortDir } from "./sort";
 
 export type OffsetListParams<SortBy extends string = string> = {
   q?: string;
@@ -18,12 +18,12 @@ export type OffsetPage<T, SortBy extends string = string> = {
   sortDir: SortDir;
 };
 
-export type CursorListParams<SortBy extends string = string> = {
+export type CursorListParams<SortBy extends string> = {
   q?: string;
-  take?: number; // >0 forward, <0 backward
-  cursor?: { id: string } | undefined; // stable unique key
+  take?: number; // > 0 forward, < 0 backward
+  cursor?: { id: string } | undefined; // stable unique key remains id
   includeDeleted?: boolean;
-  sortBy?: SortBy; // must be unique/stable for cursors
+  sortBy?: SortBy; // can be non-unique; code must add tie-breakers
   sortDir?: SortDir;
 };
 

@@ -2,7 +2,7 @@
 import { z } from "zod";
 
 // Offset pagination: limit/offset with sane defaults and caps
-export const OffsetPaginationDto = z.object({
+export const UserOffsetPaginationDto = z.object({
   q: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().max(100).default(20),
   offset: z.coerce.number().int().min(0).default(0),
@@ -15,7 +15,7 @@ export const OffsetPaginationDto = z.object({
 });
 
 // Cursor pagination: take/cursor where take>0 forward, take<0 backward
-export const CursorPaginationDto = z.object({
+export const UserCursorPaginationDto = z.object({
   q: z.string().trim().min(1).optional(),
   take: z.coerce.number().int().min(-100).max(100).default(20), // negative = backward
   cursor: z
@@ -33,5 +33,5 @@ export const CursorPaginationDto = z.object({
   sortDir: z.enum(["asc", "desc"]).optional().default("asc"),
 });
 
-export type TOffsetPagination = z.infer<typeof OffsetPaginationDto>;
-export type TCursorPagination = z.infer<typeof CursorPaginationDto>;
+export type TUserOffsetPagination = z.infer<typeof UserOffsetPaginationDto>;
+export type TUserCursorPagination = z.infer<typeof UserCursorPaginationDto>;
