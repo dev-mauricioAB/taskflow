@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/typescript-config/nextjs.json",
+ "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
     "plugins": [
       {
@@ -8,7 +8,7 @@
     ],
     "target": "ES2017"
   },
-  "include": [
+  "include": [   
     "**/*.ts",
     "**/*.tsx",
     "next-env.d.ts",
@@ -16,6 +16,10 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
+    "vitest.config.ts",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
     "node_modules"
-  ],
+  ]
 }

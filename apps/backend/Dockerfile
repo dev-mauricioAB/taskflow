@@ -65,6 +65,8 @@ COPY --from=build /repo/packages/core/package.json ./packages/core/package.json
 COPY --from=build /repo/packages/core/dist ./packages/core/dist
 COPY --from=build /repo/packages/infra/package.json ./packages/infra/package.json
 COPY --from=build /repo/packages/infra/dist ./packages/infra/dist
+COPY --from=build /repo/packages/shared/package.json ./packages/shared/package.json
+COPY --from=build /repo/packages/shared/dist ./packages/shared/dist
 # Optional: include schema directory if desired
 COPY --from=build /repo/packages/infra/prisma ./packages/infra/prisma
 
