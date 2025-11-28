@@ -9,13 +9,13 @@ export function buildProjectWhere({
   return {
     ...(q
       ? {
-        OR: [
-          { name: { contains: q, mode: Prisma.QueryMode.insensitive } },
-          {
-            description: { contains: q, mode: Prisma.QueryMode.insensitive },
-          },
-        ],
-      }
+          OR: [
+            { name: { contains: q, mode: Prisma.QueryMode.insensitive } },
+            {
+              description: { contains: q, mode: Prisma.QueryMode.insensitive },
+            },
+          ],
+        }
       : {}),
     ...(ownerId ? { ownerId } : {}),
     ...(includeDeleted ? {} : { deletedAt: null }),
@@ -41,13 +41,13 @@ export function buildTaskWhere({
   return {
     ...(q
       ? {
-        OR: [
-          { title: { contains: q, mode: Prisma.QueryMode.insensitive } },
-          {
-            description: { contains: q, mode: Prisma.QueryMode.insensitive },
-          },
-        ],
-      }
+          OR: [
+            { title: { contains: q, mode: Prisma.QueryMode.insensitive } },
+            {
+              description: { contains: q, mode: Prisma.QueryMode.insensitive },
+            },
+          ],
+        }
       : {}),
     ...(projectId ? { projectId } : {}),
     ...(userId ? { userId } : {}),

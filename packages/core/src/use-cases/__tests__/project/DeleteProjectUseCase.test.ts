@@ -33,9 +33,7 @@ describe("DeleteProjectUseCase", () => {
   it("throws NOT_FOUND when project does not exist", async () => {
     projects.findById.mockResolvedValueOnce(null);
 
-    await expect(
-      uc.execute({ projectId: "missing" }),
-    ).rejects.toMatchObject({
+    await expect(uc.execute({ projectId: "missing" })).rejects.toMatchObject({
       name: "DomainError",
       code: "NOT_FOUND",
       message: "Project not found",

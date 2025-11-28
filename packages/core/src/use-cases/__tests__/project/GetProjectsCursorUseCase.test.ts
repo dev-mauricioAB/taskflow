@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
 import type { ProjectRepository } from "@repo/infra";
-import type { TProjectCursorPagination, CursorPage, Project } from "@repo/shared";
+import type {
+  TProjectCursorPagination,
+  CursorPage,
+  Project,
+} from "@repo/shared";
 import { GetProjectsCursorUseCase } from "../../project";
 
 function makeRepo(): Mocked<ProjectRepository> {
@@ -23,7 +27,7 @@ describe("GetProjectsCursorUseCase", () => {
     const input: TProjectCursorPagination = {
       q: "crm",
       ownerId: "u1",
-      take: "25" as any,       // "25" -> 25
+      take: "25" as any, // "25" -> 25
       cursor: "abc123" as any, // string -> { id }
       // sortDir omitted -> desc
       // sortBy passed through as undefined
@@ -89,7 +93,13 @@ describe("GetProjectsCursorUseCase", () => {
   it("defaults take to 20 and omits cursor when not provided", async () => {
     const input = {} as unknown as TProjectCursorPagination;
 
-    const page = { data: [], nextCursor: undefined, prevCursor: undefined, sortBy: undefined, sortDir: "desc" } as any;
+    const page = {
+      data: [],
+      nextCursor: undefined,
+      prevCursor: undefined,
+      sortBy: undefined,
+      sortDir: "desc",
+    } as any;
     repo.findAllCursor.mockResolvedValueOnce(page);
 
     const result = await uc.execute(input);

@@ -21,13 +21,15 @@ vi.mock("../helpers", () => ({
 
 // 3) Keep real error mapper (optional, for decorator consistency)
 vi.mock("../../database/prisma-error-mapper", async (orig) => {
-  const real = await orig<typeof import("../../database/prisma-error-mapper")>();
+  const real =
+    await orig<typeof import("../../database/prisma-error-mapper")>();
   return { ...real };
 });
 
-
 import {
-  Prisma, User as PrismaUser, Project as PrismaProject
+  Prisma,
+  User as PrismaUser,
+  Project as PrismaProject,
 } from "@prisma/client";
 import { TaskRepository } from "../task.repository";
 
@@ -39,7 +41,7 @@ describe("TaskRepository", () => {
     repo = new TaskRepository();
   });
 
-  describe('findById', () => {
+  describe("findById", () => {
     it("delegates to prisma.task.findUnique with where.id and returns the task", async () => {
       const id = "task-123";
       const task = {
@@ -51,21 +53,29 @@ describe("TaskRepository", () => {
         // add other required fields from your schema
       } as unknown as PrismaTask;
 
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(task);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(
+        task,
+      );
 
       const result = await repo.findById(id);
 
-      expect(prismaMock.task.findUnique).toHaveBeenCalledWith({ where: { id } });
+      expect(prismaMock.task.findUnique).toHaveBeenCalledWith({
+        where: { id },
+      });
       expect(result).toBe(task);
     });
 
     it("returns null when task is not found", async () => {
       const id = "missing-task";
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.findById(id);
 
-      expect(prismaMock.task.findUnique).toHaveBeenCalledWith({ where: { id } });
+      expect(prismaMock.task.findUnique).toHaveBeenCalledWith({
+        where: { id },
+      });
       expect(result).toBeNull();
     });
 
@@ -75,7 +85,9 @@ describe("TaskRepository", () => {
         code: "P2025",
         clientVersion: "x",
       });
-      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(p2025);
+      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(
+        p2025,
+      );
 
       await expect(repo.findById(id)).rejects.toMatchObject({
         name: "DomainError",
@@ -89,7 +101,9 @@ describe("TaskRepository", () => {
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const id = "boom2";
       const unknown = new Error("db down");
-      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findById(id)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -98,7 +112,7 @@ describe("TaskRepository", () => {
         cause: unknown,
       });
     });
-  })
+  });
 
   describe("save", () => {
     it("updates when task.id is present with the expected data projection", async () => {
@@ -201,7 +215,9 @@ describe("TaskRepository", () => {
       } as any;
       const unknown = new Error("db down");
 
-      (prismaMock.task.create as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.create as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.save(task)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -216,7 +232,9 @@ describe("TaskRepository", () => {
 
       await repo.delete("t1");
 
-      expect(prismaMock.task.delete).toHaveBeenCalledWith({ where: { id: "t1" } });
+      expect(prismaMock.task.delete).toHaveBeenCalledWith({
+        where: { id: "t1" },
+      });
     });
 
     it("maps P2025 (record not found) to DomainError NOT_FOUND 404", async () => {
@@ -237,7 +255,9 @@ describe("TaskRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.task.delete as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.delete as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.delete("t1")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -272,11 +292,15 @@ describe("TaskRepository", () => {
         } as any,
       ];
 
-      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(tasks);
+      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(
+        tasks,
+      );
 
       const result = await repo.findByProjectId(projectId);
 
-      expect(prismaMock.task.findMany).toHaveBeenCalledWith({ where: { projectId } });
+      expect(prismaMock.task.findMany).toHaveBeenCalledWith({
+        where: { projectId },
+      });
       expect(result).toEqual(tasks);
     });
 
@@ -286,14 +310,20 @@ describe("TaskRepository", () => {
 
       const result = await repo.findByProjectId(projectId);
 
-      expect(prismaMock.task.findMany).toHaveBeenCalledWith({ where: { projectId } });
+      expect(prismaMock.task.findMany).toHaveBeenCalledWith({
+        where: { projectId },
+      });
       expect(result).toEqual([]);
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
       const projectId = "boom";
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.findByProjectId(projectId)).rejects.toMatchObject({
         name: "DomainError",
@@ -305,7 +335,9 @@ describe("TaskRepository", () => {
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const projectId = "boom2";
       const unknown = new Error("db down");
-      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findByProjectId(projectId)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -326,7 +358,9 @@ describe("TaskRepository", () => {
         projectId: "p1",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -334,7 +368,9 @@ describe("TaskRepository", () => {
         message: "Owner user not found",
       });
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u-missing" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u-missing" },
+      });
       expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
       expect(prismaMock.task.create).not.toHaveBeenCalled();
     });
@@ -348,8 +384,12 @@ describe("TaskRepository", () => {
         projectId: "p-missing",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -357,8 +397,12 @@ describe("TaskRepository", () => {
         message: "Project not found",
       });
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u1" } });
-      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({ where: { id: "p-missing" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u1" },
+      });
+      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({
+        where: { id: "p-missing" },
+      });
       expect(prismaMock.task.create).not.toHaveBeenCalled();
     });
 
@@ -384,14 +428,24 @@ describe("TaskRepository", () => {
         updatedAt: new Date(),
       } as any;
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(user);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(project);
-      (prismaMock.task.create as unknown as Mock).mockResolvedValueOnce(created);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(
+        user,
+      );
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(
+        project,
+      );
+      (prismaMock.task.create as unknown as Mock).mockResolvedValueOnce(
+        created,
+      );
 
       const result = await repo.create(dto);
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u1" } });
-      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({ where: { id: "p1" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u1" },
+      });
+      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({
+        where: { id: "p1" },
+      });
       expect(prismaMock.task.create).toHaveBeenCalledWith({
         data: {
           title: "My Task",
@@ -413,14 +467,22 @@ describe("TaskRepository", () => {
         projectId: "p1",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "p1" } as PrismaProject);
-      (prismaMock.task.create as unknown as Mock).mockResolvedValueOnce({ id: "t1" });
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "p1",
+      } as PrismaProject);
+      (prismaMock.task.create as unknown as Mock).mockResolvedValueOnce({
+        id: "t1",
+      });
 
       await repo.create(dto);
 
       // When description is undefined, ensure no accidental "  ".trim() access error and data omits description or passes undefined
-      const callArg = (prismaMock.task.create as unknown as Mock).mock.calls.at(-1)?.[0];
+      const callArg = (prismaMock.task.create as unknown as Mock).mock.calls.at(
+        -1,
+      )?.[0];
       expect(callArg.data).toMatchObject({
         title: "Title",
         status: "inProgress",
@@ -428,7 +490,9 @@ describe("TaskRepository", () => {
         projectId: "p1",
       });
       // If your code uses optional chaining dto.description?.trim(), undefined is fine
-      expect(Object.prototype.hasOwnProperty.call(callArg.data, "description")).toBe(true);
+      expect(
+        Object.prototype.hasOwnProperty.call(callArg.data, "description"),
+      ).toBe(true);
       expect(callArg.data.description).toBeUndefined();
     });
 
@@ -441,11 +505,17 @@ describe("TaskRepository", () => {
         projectId: "p1",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "p1" } as PrismaProject);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "p1",
+      } as PrismaProject);
 
       const unknown = new Error("db down");
-      (prismaMock.task.create as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.create as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -465,7 +535,9 @@ describe("TaskRepository", () => {
         projectId: "p1",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -485,9 +557,20 @@ describe("TaskRepository", () => {
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
       const tasks: PrismaTask[] = [
-        { id: "t1", title: "A", description: null, status: "OPEN" as any, projectId: "p1", userId: "u1", createdAt: new Date(), updatedAt: new Date() } as any,
+        {
+          id: "t1",
+          title: "A",
+          description: null,
+          status: "OPEN" as any,
+          projectId: "p1",
+          userId: "u1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any,
       ];
-      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(tasks);
+      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(
+        tasks,
+      );
       (prismaMock.task.count as unknown as Mock).mockResolvedValueOnce(1);
 
       const result = await repo.findAll(params as any);
@@ -576,13 +659,19 @@ describe("TaskRepository", () => {
       const where = { userId: "u1" };
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
-      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce([{ id: "t1" }] as any);
+      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce([
+        { id: "t1" },
+      ] as any);
       (prismaMock.task.count as unknown as Mock).mockResolvedValueOnce(1);
 
       await repo.findAll({ userId: "u1" } as any);
 
-      const findManyArg = (prismaMock.task.findMany as unknown as Mock).mock.calls.at(-1)?.[0];
-      const countArg = (prismaMock.task.count as unknown as Mock).mock.calls.at(-1)?.[0];
+      const findManyArg = (
+        prismaMock.task.findMany as unknown as Mock
+      ).mock.calls.at(-1)?.[0];
+      const countArg = (prismaMock.task.count as unknown as Mock).mock.calls.at(
+        -1,
+      )?.[0];
 
       expect(findManyArg.where).toEqual(where);
       expect(countArg.where).toEqual(where);
@@ -594,8 +683,12 @@ describe("TaskRepository", () => {
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
       // PrismaClientValidationError signature differs by version; the single-arg string is supported broadly
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.findAll({ q: "x" })).rejects.toMatchObject({
         name: "DomainError",
@@ -609,7 +702,9 @@ describe("TaskRepository", () => {
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
       const unknown = new Error("db down");
-      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findAll({})).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -623,13 +718,19 @@ describe("TaskRepository", () => {
       const where = { userId: "u1" };
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
-      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce([{ id: "t1" }] as any);
+      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce([
+        { id: "t1" },
+      ] as any);
       (prismaMock.task.count as unknown as Mock).mockResolvedValueOnce(1);
 
       await repo.findAll({ userId: "u1" });
 
-      const findManyArg = (prismaMock.task.findMany as unknown as Mock).mock.calls.at(-1)?.[0];
-      const countArg = (prismaMock.task.count as unknown as Mock).mock.calls.at(-1)?.[0];
+      const findManyArg = (
+        prismaMock.task.findMany as unknown as Mock
+      ).mock.calls.at(-1)?.[0];
+      const countArg = (prismaMock.task.count as unknown as Mock).mock.calls.at(
+        -1,
+      )?.[0];
 
       expect(findManyArg.where).toEqual(where);
       expect(countArg.where).toEqual(where);
@@ -642,9 +743,33 @@ describe("TaskRepository", () => {
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
       const rows: PrismaTask[] = [
-        { id: "2", title: "B", status: "OPEN" as any, projectId: "p1", userId: "u1", createdAt: new Date("2024-01-02"), updatedAt: new Date() } as any,
-        { id: "3", title: "C", status: "OPEN" as any, projectId: "p1", userId: "u1", createdAt: new Date("2024-01-03"), updatedAt: new Date() } as any,
-        { id: "4", title: "D", status: "OPEN" as any, projectId: "p1", userId: "u1", createdAt: new Date("2024-01-04"), updatedAt: new Date() } as any,
+        {
+          id: "2",
+          title: "B",
+          status: "OPEN" as any,
+          projectId: "p1",
+          userId: "u1",
+          createdAt: new Date("2024-01-02"),
+          updatedAt: new Date(),
+        } as any,
+        {
+          id: "3",
+          title: "C",
+          status: "OPEN" as any,
+          projectId: "p1",
+          userId: "u1",
+          createdAt: new Date("2024-01-03"),
+          updatedAt: new Date(),
+        } as any,
+        {
+          id: "4",
+          title: "D",
+          status: "OPEN" as any,
+          projectId: "p1",
+          userId: "u1",
+          createdAt: new Date("2024-01-04"),
+          updatedAt: new Date(),
+        } as any,
       ];
       (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(rows);
 
@@ -670,7 +795,7 @@ describe("TaskRepository", () => {
         cursor: undefined,
       });
       // HasMore since 3 fetched for pageSize=2; next cursor is the last of the first 2
-      expect(res.data.map(t => t.id)).toEqual(["2", "3"]);
+      expect(res.data.map((t) => t.id)).toEqual(["2", "3"]);
       expect(res.nextCursor).toEqual({ id: "3" });
       expect(res.prevCursor).toBeUndefined();
       expect(res.sortBy).toBe("createdAt");
@@ -700,7 +825,7 @@ describe("TaskRepository", () => {
         skip: undefined,
         cursor: undefined,
       });
-      expect(res.data.map(r => r.id)).toEqual(["a", "b"]);
+      expect(res.data.map((r) => r.id)).toEqual(["a", "b"]);
       expect(res.nextCursor).toEqual({ id: "b" });
       expect(res.prevCursor).toBeUndefined();
     });
@@ -710,7 +835,7 @@ describe("TaskRepository", () => {
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
       (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(
-        Array.from({ length: 101 }, (_, i) => ({ id: String(100 + i) })) as any
+        Array.from({ length: 101 }, (_, i) => ({ id: String(100 + i) })) as any,
       );
 
       await repo.findAllCursor({
@@ -734,7 +859,9 @@ describe("TaskRepository", () => {
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
       const rows = [{ id: "30" }, { id: "20" }, { id: "10" }]; // returned in db order (desc for example)
-      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(rows as any);
+      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce(
+        rows as any,
+      );
 
       const res = await repo.findAllCursor({
         take: -2,
@@ -753,7 +880,7 @@ describe("TaskRepository", () => {
       });
 
       // rows reversed -> ["10", "20", "30"], pageSize=2 => data ["10", "20"], hasMore true => prevCursor from first item
-      expect(res.data.map(r => r.id)).toEqual(["10", "20"]);
+      expect(res.data.map((r) => r.id)).toEqual(["10", "20"]);
       expect(res.prevCursor).toEqual({ id: "10" });
       expect(res.nextCursor).toBeUndefined();
     });
@@ -762,7 +889,9 @@ describe("TaskRepository", () => {
       const where = {};
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
-      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce([{ id: "1" }] as any);
+      (prismaMock.task.findMany as unknown as Mock).mockResolvedValueOnce([
+        { id: "1" },
+      ] as any);
 
       const res = await repo.findAllCursor({
         take: 2,
@@ -770,7 +899,7 @@ describe("TaskRepository", () => {
         sortDir: "asc",
       } as any);
 
-      expect(res.data.map(r => r.id)).toEqual(["1"]);
+      expect(res.data.map((r) => r.id)).toEqual(["1"]);
       expect(res.nextCursor).toBeUndefined();
       expect(res.prevCursor).toBeUndefined();
     });
@@ -779,11 +908,15 @@ describe("TaskRepository", () => {
       const where = {};
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(
-        repo.findAllCursor({ take: 2, sortBy: "id", sortDir: "asc" } as any)
+        repo.findAllCursor({ take: 2, sortBy: "id", sortDir: "asc" } as any),
       ).rejects.toMatchObject({
         name: "DomainError",
         code: ERROR_CODES.VALIDATION_FAILED,
@@ -796,10 +929,12 @@ describe("TaskRepository", () => {
       mocks.buildTaskWhere.mockReturnValueOnce(where);
 
       const unknown = new Error("db down");
-      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.findMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(
-        repo.findAllCursor({ take: 2, sortBy: "id", sortDir: "asc" } as any)
+        repo.findAllCursor({ take: 2, sortBy: "id", sortDir: "asc" } as any),
       ).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
         status: 500,
@@ -834,7 +969,9 @@ describe("TaskRepository", () => {
       });
       (prismaMock.task.update as unknown as Mock).mockRejectedValueOnce(p2025);
 
-      await expect(repo.markAsCompleted(taskId, completedAt)).rejects.toMatchObject({
+      await expect(
+        repo.markAsCompleted(taskId, completedAt),
+      ).rejects.toMatchObject({
         name: "DomainError",
         code: ERROR_CODES.NOT_FOUND,
         status: 404,
@@ -848,9 +985,13 @@ describe("TaskRepository", () => {
       const completedAt = new Date();
       const unknown = new Error("db down");
 
-      (prismaMock.task.update as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.update as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
-      await expect(repo.markAsCompleted(taskId, completedAt)).rejects.toMatchObject({
+      await expect(
+        repo.markAsCompleted(taskId, completedAt),
+      ).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
         status: 500,
         message: "Unexpected database error",
@@ -861,9 +1002,15 @@ describe("TaskRepository", () => {
 
   describe("update", () => {
     it("throws DomainError NOT_FOUND when user does not exist", async () => {
-      const dto: TUpdateTaskDto = { userId: "u-missing", projectId: "p1", title: "T" };
+      const dto: TUpdateTaskDto = {
+        userId: "u-missing",
+        projectId: "p1",
+        title: "T",
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.update("t1", dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -871,16 +1018,26 @@ describe("TaskRepository", () => {
         message: "User not found",
       });
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u-missing" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u-missing" },
+      });
       expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
       expect(prismaMock.task.update).not.toHaveBeenCalled();
     });
 
     it("throws DomainError NOT_FOUND when project does not exist", async () => {
-      const dto: TUpdateTaskDto = { userId: "u1", projectId: "p-missing", title: "T" };
+      const dto: TUpdateTaskDto = {
+        userId: "u1",
+        projectId: "p-missing",
+        title: "T",
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.update("t1", dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -888,8 +1045,12 @@ describe("TaskRepository", () => {
         message: "Project not found",
       });
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u1" } });
-      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({ where: { id: "p-missing" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u1" },
+      });
+      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({
+        where: { id: "p-missing" },
+      });
       expect(prismaMock.task.update).not.toHaveBeenCalled();
     });
 
@@ -903,8 +1064,12 @@ describe("TaskRepository", () => {
         projectId: "p1",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "p1" } as PrismaProject);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "p1",
+      } as PrismaProject);
 
       const selected = {
         id: taskId,
@@ -916,7 +1081,9 @@ describe("TaskRepository", () => {
         updatedAt: new Date(),
       };
 
-      (prismaMock.task.update as unknown as Mock).mockResolvedValueOnce(selected);
+      (prismaMock.task.update as unknown as Mock).mockResolvedValueOnce(
+        selected,
+      );
 
       const res = await repo.update(taskId, dto);
 
@@ -940,8 +1107,12 @@ describe("TaskRepository", () => {
       const taskId = "missing";
       const dto: TUpdateTaskDto = { title: "X", userId: "u1", projectId: "p1" };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "p1" } as PrismaProject);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "p1",
+      } as PrismaProject);
 
       const p2025 = new Prisma.PrismaClientKnownRequestError("not found", {
         code: "P2025",
@@ -962,11 +1133,17 @@ describe("TaskRepository", () => {
       const taskId = "t1";
       const dto: TUpdateTaskDto = { title: "X", userId: "u1", projectId: "p1" };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "p1" } as PrismaProject);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "p1",
+      } as PrismaProject);
 
       const unknown = new Error("db down");
-      (prismaMock.task.update as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.update as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.update(taskId, dto)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -982,7 +1159,9 @@ describe("TaskRepository", () => {
       const taskId = "t1";
       const when = new Date("2024-01-01T00:00:00Z");
 
-      (prismaMock.task.updateMany as unknown as Mock).mockResolvedValueOnce({ count: 1 });
+      (prismaMock.task.updateMany as unknown as Mock).mockResolvedValueOnce({
+        count: 1,
+      });
 
       const result = await repo.softDelete(taskId, when);
 
@@ -997,7 +1176,9 @@ describe("TaskRepository", () => {
       const taskId = "t2";
       const when = new Date("2024-01-02T00:00:00Z");
 
-      (prismaMock.task.updateMany as unknown as Mock).mockResolvedValueOnce({ count: 0 });
+      (prismaMock.task.updateMany as unknown as Mock).mockResolvedValueOnce({
+        count: 0,
+      });
 
       const result = await repo.softDelete(taskId, when);
 
@@ -1012,8 +1193,12 @@ describe("TaskRepository", () => {
       const taskId = "t3";
       const when = new Date();
 
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.task.updateMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.task.updateMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.softDelete(taskId, when)).rejects.toMatchObject({
         name: "DomainError",
@@ -1027,7 +1212,9 @@ describe("TaskRepository", () => {
       const when = new Date();
       const unknown = new Error("db down");
 
-      (prismaMock.task.updateMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.updateMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.softDelete(taskId, when)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -1040,26 +1227,36 @@ describe("TaskRepository", () => {
 
   describe("hardDelete", () => {
     it("calls deleteMany with where.id and returns true when count>0", async () => {
-      (prismaMock.task.deleteMany as unknown as Mock).mockResolvedValueOnce({ count: 1 });
+      (prismaMock.task.deleteMany as unknown as Mock).mockResolvedValueOnce({
+        count: 1,
+      });
 
       const result = await repo.hardDelete("t1");
 
-      expect(prismaMock.task.deleteMany).toHaveBeenCalledWith({ where: { id: "t1" } });
+      expect(prismaMock.task.deleteMany).toHaveBeenCalledWith({
+        where: { id: "t1" },
+      });
       expect(result).toBe(true);
     });
 
     it("returns false when nothing was deleted (idempotent)", async () => {
-      (prismaMock.task.deleteMany as unknown as Mock).mockResolvedValueOnce({ count: 0 });
+      (prismaMock.task.deleteMany as unknown as Mock).mockResolvedValueOnce({
+        count: 0,
+      });
 
       const result = await repo.hardDelete("missing");
 
-      expect(prismaMock.task.deleteMany).toHaveBeenCalledWith({ where: { id: "missing" } });
+      expect(prismaMock.task.deleteMany).toHaveBeenCalledWith({
+        where: { id: "missing" },
+      });
       expect(result).toBe(false);
     });
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500 via mapper", async () => {
       const unknown = new Error("db down");
-      (prismaMock.task.deleteMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.deleteMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.hardDelete("t1")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -1072,7 +1269,9 @@ describe("TaskRepository", () => {
 
   describe("exists", () => {
     it("delegates to findUnique with where.id and select.id, returns true when row exists", async () => {
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "t1" });
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "t1",
+      });
 
       const result = await repo.exists("t1");
 
@@ -1084,7 +1283,9 @@ describe("TaskRepository", () => {
     });
 
     it("returns false when findUnique returns null", async () => {
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.exists("missing");
 
@@ -1096,8 +1297,12 @@ describe("TaskRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.exists("x")).rejects.toMatchObject({
         name: "DomainError",
@@ -1108,7 +1313,9 @@ describe("TaskRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.exists("x")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -1152,7 +1359,9 @@ describe("TaskRepository", () => {
 
     it("returns false when row is not found", async () => {
       const taskId = "missing";
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.isSoftDeleted(taskId);
 
@@ -1165,8 +1374,12 @@ describe("TaskRepository", () => {
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
       const taskId = "boom";
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.isSoftDeleted(taskId)).rejects.toMatchObject({
         name: "DomainError",
@@ -1178,7 +1391,9 @@ describe("TaskRepository", () => {
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const taskId = "boom2";
       const unknown = new Error("db down");
-      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.task.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.isSoftDeleted(taskId)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,

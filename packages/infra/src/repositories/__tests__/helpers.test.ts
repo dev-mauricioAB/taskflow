@@ -13,7 +13,9 @@ describe("buildProjectWhere", () => {
     expect(where).toEqual({
       OR: [
         { name: { contains: "crm", mode: Prisma.QueryMode.insensitive } },
-        { description: { contains: "crm", mode: Prisma.QueryMode.insensitive } },
+        {
+          description: { contains: "crm", mode: Prisma.QueryMode.insensitive },
+        },
       ],
       deletedAt: null,
     });
@@ -29,7 +31,9 @@ describe("buildProjectWhere", () => {
     expect(where).toEqual({
       OR: [
         { name: { contains: "crm", mode: Prisma.QueryMode.insensitive } },
-        { description: { contains: "crm", mode: Prisma.QueryMode.insensitive } },
+        {
+          description: { contains: "crm", mode: Prisma.QueryMode.insensitive },
+        },
       ],
       ownerId: "u1",
       deletedAt: null,
@@ -53,7 +57,9 @@ describe("buildTaskWhere", () => {
     expect(where).toEqual({
       OR: [
         { title: { contains: "fix", mode: Prisma.QueryMode.insensitive } },
-        { description: { contains: "fix", mode: Prisma.QueryMode.insensitive } },
+        {
+          description: { contains: "fix", mode: Prisma.QueryMode.insensitive },
+        },
       ],
       deletedAt: null,
     });
@@ -83,7 +89,9 @@ describe("buildTaskWhere", () => {
     expect(where).toEqual({
       OR: [
         { title: { contains: "fix", mode: Prisma.QueryMode.insensitive } },
-        { description: { contains: "fix", mode: Prisma.QueryMode.insensitive } },
+        {
+          description: { contains: "fix", mode: Prisma.QueryMode.insensitive },
+        },
       ],
       projectId: "p1",
       userId: "u1",

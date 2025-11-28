@@ -15,18 +15,23 @@ vi.mock("../helpers", () => ({
   buildProjectWhere: mocks.buildProjectWhere,
 }));
 
-
 // Use the real error mapper so the decorator path is exercised end-to-end
 vi.mock("../../database/prisma-error-mapper", async (orig) => {
-  const real = await orig<typeof import("../../database/prisma-error-mapper")>();
+  const real =
+    await orig<typeof import("../../database/prisma-error-mapper")>();
   return { ...real };
 });
 
-import {
-  Prisma, User as PrismaUser
-} from "@prisma/client";
+import { Prisma, User as PrismaUser } from "@prisma/client";
 import { ProjectRepository } from "../project.repository";
-import { CursorListParams, ERROR_CODES, OffsetListParams, ProjectSortBy, TCreateProjectDto, TUpdateProjectDto } from "@repo/shared";
+import {
+  CursorListParams,
+  ERROR_CODES,
+  OffsetListParams,
+  ProjectSortBy,
+  TCreateProjectDto,
+  TUpdateProjectDto,
+} from "@repo/shared";
 import { ProjectFilters } from "../../interfaces";
 
 describe("ProjectRepository", () => {
@@ -37,7 +42,7 @@ describe("ProjectRepository", () => {
     repo = new ProjectRepository();
   });
 
-  describe('findById', () => {
+  describe("findById", () => {
     it("delegates to prisma.project.findUnique with where.id and returns the project", async () => {
       const id = "proj-123";
       const project = {
@@ -48,21 +53,29 @@ describe("ProjectRepository", () => {
         // add any required fields from your schema
       } as unknown as PrismaProject;
 
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(project);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(
+        project,
+      );
 
       const result = await repo.findById(id);
 
-      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({ where: { id } });
+      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({
+        where: { id },
+      });
       expect(result).toBe(project);
     });
 
     it("returns null when project is not found", async () => {
       const id = "missing";
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.findById(id);
 
-      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({ where: { id } });
+      expect(prismaMock.project.findUnique).toHaveBeenCalledWith({
+        where: { id },
+      });
       expect(result).toBeNull();
     });
 
@@ -72,7 +85,9 @@ describe("ProjectRepository", () => {
         code: "P2025",
         clientVersion: "x",
       });
-      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(p2025);
+      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(
+        p2025,
+      );
 
       await expect(repo.findById(id)).rejects.toMatchObject({
         name: "DomainError",
@@ -86,7 +101,9 @@ describe("ProjectRepository", () => {
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const id = "boom2";
       const unknown = new Error("db down");
-      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findById(id)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -95,7 +112,7 @@ describe("ProjectRepository", () => {
         cause: unknown,
       });
     });
-  })
+  });
 
   describe("save", () => {
     it("updates when project.id is present with only mutable fields", async () => {
@@ -155,7 +172,9 @@ describe("ProjectRepository", () => {
         clientVersion: "x",
         meta: { target: ["Project_unique_field"] }, // adjust if needed
       });
-      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(p2002);
+      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(
+        p2002,
+      );
 
       await expect(repo.save(project)).rejects.toMatchObject({
         name: "DomainError",
@@ -181,7 +200,9 @@ describe("ProjectRepository", () => {
         clientVersion: "x",
         meta: { target: ["Project_unique_field"] },
       });
-      (prismaMock.project.update as unknown as Mock).mockRejectedValueOnce(p2002);
+      (prismaMock.project.update as unknown as Mock).mockRejectedValueOnce(
+        p2002,
+      );
 
       await expect(repo.save(project)).rejects.toMatchObject({
         name: "DomainError",
@@ -198,7 +219,9 @@ describe("ProjectRepository", () => {
       } as Partial<PrismaProject> as PrismaProject;
 
       const unknown = new Error("db down");
-      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.save(project)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -215,7 +238,9 @@ describe("ProjectRepository", () => {
 
       await repo.delete("proj-1");
 
-      expect(prismaMock.project.delete).toHaveBeenCalledWith({ where: { id: "proj-1" } });
+      expect(prismaMock.project.delete).toHaveBeenCalledWith({
+        where: { id: "proj-1" },
+      });
     });
 
     it("maps P2025 (record not found) to DomainError NOT_FOUND 404", async () => {
@@ -223,7 +248,9 @@ describe("ProjectRepository", () => {
         code: "P2025",
         clientVersion: "x",
       });
-      (prismaMock.project.delete as unknown as Mock).mockRejectedValueOnce(p2025);
+      (prismaMock.project.delete as unknown as Mock).mockRejectedValueOnce(
+        p2025,
+      );
 
       await expect(repo.delete("missing")).rejects.toMatchObject({
         name: "DomainError",
@@ -236,7 +263,9 @@ describe("ProjectRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.project.delete as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.delete as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.delete("proj-1")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -249,9 +278,15 @@ describe("ProjectRepository", () => {
 
   describe("create", () => {
     it("throws DomainError NOT_FOUND when owner user does not exist", async () => {
-      const dto: TCreateProjectDto = { ownerId: "u-missing", name: "  Name  ", description: "  Desc  " };
+      const dto: TCreateProjectDto = {
+        ownerId: "u-missing",
+        name: "  Name  ",
+        description: "  Desc  ",
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -259,14 +294,22 @@ describe("ProjectRepository", () => {
         message: "Owner user not found",
       });
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u-missing" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u-missing" },
+      });
       expect(prismaMock.project.create).not.toHaveBeenCalled();
     });
 
     it("trims name and description and creates project", async () => {
-      const dto: TCreateProjectDto = { ownerId: "u1", name: "  My Project  ", description: "  Some desc  " };
+      const dto: TCreateProjectDto = {
+        ownerId: "u1",
+        name: "  My Project  ",
+        description: "  Some desc  ",
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
 
       const created: PrismaProject = {
         id: "p1",
@@ -277,11 +320,15 @@ describe("ProjectRepository", () => {
         updatedAt: new Date(),
       } as any;
 
-      (prismaMock.project.create as unknown as Mock).mockResolvedValueOnce(created);
+      (prismaMock.project.create as unknown as Mock).mockResolvedValueOnce(
+        created,
+      );
 
       const result = await repo.create(dto);
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u1" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u1" },
+      });
       expect(prismaMock.project.create).toHaveBeenCalledWith({
         data: {
           ownerId: "u1",
@@ -293,34 +340,54 @@ describe("ProjectRepository", () => {
     });
 
     it("handles undefined/nullable description safely (optional chaining trim)", async () => {
-      const dto: TCreateProjectDto = { ownerId: "u1", name: "  Title  ", description: undefined };
+      const dto: TCreateProjectDto = {
+        ownerId: "u1",
+        name: "  Title  ",
+        description: undefined,
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.project.create as unknown as Mock).mockResolvedValueOnce({ id: "p1" });
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.project.create as unknown as Mock).mockResolvedValueOnce({
+        id: "p1",
+      });
 
       await repo.create(dto);
 
-      const arg = (prismaMock.project.create as unknown as Mock).mock.calls.at(-1)?.[0];
+      const arg = (prismaMock.project.create as unknown as Mock).mock.calls.at(
+        -1,
+      )?.[0];
       expect(arg.data).toMatchObject({
         ownerId: "u1",
         name: "Title",
       });
       // description key exists and is undefined due to optional chaining
-      expect(Object.prototype.hasOwnProperty.call(arg.data, "description")).toBe(true);
+      expect(
+        Object.prototype.hasOwnProperty.call(arg.data, "description"),
+      ).toBe(true);
       expect(arg.data.description).toBeUndefined();
     });
 
     it("maps unique constraint (P2002) to DomainError 409 (adjust expected code to your mapper)", async () => {
-      const dto: TCreateProjectDto = { ownerId: "u1", name: "Duplicate", description: "x" };
+      const dto: TCreateProjectDto = {
+        ownerId: "u1",
+        name: "Duplicate",
+        description: "x",
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
 
       const p2002 = new Prisma.PrismaClientKnownRequestError("unique", {
         code: "P2002",
         clientVersion: "x",
         meta: { target: ["Project_unique_field"] }, // adapt to your schema
       });
-      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(p2002);
+      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(
+        p2002,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -332,12 +399,20 @@ describe("ProjectRepository", () => {
     });
 
     it("maps unexpected errors to INTERNAL_SERVER_ERROR 500 via mapper", async () => {
-      const dto: TCreateProjectDto = { ownerId: "u1", name: "Name", description: "Desc" };
+      const dto: TCreateProjectDto = {
+        ownerId: "u1",
+        name: "Name",
+        description: "Desc",
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
 
       const unknown = new Error("db down");
-      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.create as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -348,9 +423,15 @@ describe("ProjectRepository", () => {
     });
 
     it("does not remap explicit DomainError thrown by owner check (pass-through)", async () => {
-      const dto: TCreateProjectDto = { ownerId: "missing", name: "Name", description: "Desc" };
+      const dto: TCreateProjectDto = {
+        ownerId: "missing",
+        name: "Name",
+        description: "Desc",
+      };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -378,7 +459,10 @@ describe("ProjectRepository", () => {
       ];
 
       // Simulate $transaction returning [findMany, count]
-      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([rows, 1]);
+      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([
+        rows,
+        1,
+      ]);
 
       const result = await repo.findAll(params);
 
@@ -420,7 +504,10 @@ describe("ProjectRepository", () => {
       const where = { ownerId: "u1" }; // your builder may omit deletedAt when includeDeleted=true
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
-      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([[], 0]);
+      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([
+        [],
+        0,
+      ]);
 
       const result = await repo.findAll(params);
 
@@ -451,7 +538,10 @@ describe("ProjectRepository", () => {
       const where = {};
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
-      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([[], 0]);
+      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([
+        [],
+        0,
+      ]);
 
       const res = await repo.findAll({ limit: 1, offset: 0 });
 
@@ -463,8 +553,12 @@ describe("ProjectRepository", () => {
       const where = {};
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.$transaction as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.$transaction as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.findAll({ q: "x" })).rejects.toMatchObject({
         name: "DomainError",
@@ -478,7 +572,9 @@ describe("ProjectRepository", () => {
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
       const unknown = new Error("db down");
-      (prismaMock.$transaction as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.$transaction as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findAll({})).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -492,7 +588,10 @@ describe("ProjectRepository", () => {
       const where = { ownerId: "u1" };
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
-      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([[{ id: "p1" }], 1]);
+      (prismaMock.$transaction as unknown as Mock).mockResolvedValueOnce([
+        [{ id: "p1" }],
+        1,
+      ]);
 
       await repo.findAll({ ownerId: "u1" });
 
@@ -510,13 +609,38 @@ describe("ProjectRepository", () => {
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
       const rows: PrismaProject[] = [
-        { id: "2", name: "B", ownerId: "u1", description: null, createdAt: new Date(), updatedAt: new Date() } as any,
-        { id: "3", name: "C", ownerId: "u1", description: null, createdAt: new Date(), updatedAt: new Date() } as any,
-        { id: "4", name: "D", ownerId: "u1", description: null, createdAt: new Date(), updatedAt: new Date() } as any,
+        {
+          id: "2",
+          name: "B",
+          ownerId: "u1",
+          description: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any,
+        {
+          id: "3",
+          name: "C",
+          ownerId: "u1",
+          description: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any,
+        {
+          id: "4",
+          name: "D",
+          ownerId: "u1",
+          description: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any,
       ];
-      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(rows);
+      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(
+        rows,
+      );
 
-      const res = await repo.findAllCursor({} as CursorListParams<ProjectSortBy>);
+      const res = await repo.findAllCursor(
+        {} as CursorListParams<ProjectSortBy>,
+      );
 
       expect(mocks.buildProjectWhere).toHaveBeenCalledWith({
         q: undefined,
@@ -533,7 +657,7 @@ describe("ProjectRepository", () => {
       });
 
       // hasMore true -> first 20 returned, but we only provided 3 rows so no hasMore
-      expect(res.data.map(p => p.id)).toEqual(["2", "3", "4"]);
+      expect(res.data.map((p) => p.id)).toEqual(["2", "3", "4"]);
       expect(res.nextCursor).toBeUndefined();
       expect(res.prevCursor).toBeUndefined();
       expect(res.sortBy).toBe("name");
@@ -563,7 +687,7 @@ describe("ProjectRepository", () => {
         skip: undefined,
         cursor: undefined,
       });
-      expect(res.data.map(p => p.id)).toEqual(["a", "b"]);
+      expect(res.data.map((p) => p.id)).toEqual(["a", "b"]);
       expect(res.nextCursor).toEqual({ id: "b" });
       expect(res.prevCursor).toBeUndefined();
     });
@@ -598,7 +722,10 @@ describe("ProjectRepository", () => {
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
       (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(
-        Array.from({ length: 101 }, (_, i) => ({ id: String(100 + i), name: `N${i}` })) as any
+        Array.from({ length: 101 }, (_, i) => ({
+          id: String(100 + i),
+          name: `N${i}`,
+        })) as any,
       );
 
       await repo.findAllCursor({
@@ -626,7 +753,9 @@ describe("ProjectRepository", () => {
         { id: "20", name: "Y" },
         { id: "10", name: "X" },
       ];
-      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(rows as any);
+      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(
+        rows as any,
+      );
 
       const res = await repo.findAllCursor({
         take: -2,
@@ -644,7 +773,7 @@ describe("ProjectRepository", () => {
       });
 
       // normalized reverse -> ["10","20","30"], pageSize 2 -> ["10","20"], hasMore true -> prevCursor from first
-      expect(res.data.map(p => p.id)).toEqual(["10", "20"]);
+      expect(res.data.map((p) => p.id)).toEqual(["10", "20"]);
       expect(res.prevCursor).toEqual({ id: "10" });
       expect(res.nextCursor).toBeUndefined();
     });
@@ -653,7 +782,9 @@ describe("ProjectRepository", () => {
       const where = {};
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
-      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce([{ id: "1", name: "A" }] as any);
+      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce([
+        { id: "1", name: "A" },
+      ] as any);
 
       const res = await repo.findAllCursor({
         take: 2,
@@ -661,7 +792,7 @@ describe("ProjectRepository", () => {
         sortDir: "asc",
       } as CursorListParams<ProjectSortBy>);
 
-      expect(res.data.map(p => p.id)).toEqual(["1"]);
+      expect(res.data.map((p) => p.id)).toEqual(["1"]);
       expect(res.nextCursor).toBeUndefined();
       expect(res.prevCursor).toBeUndefined();
     });
@@ -670,11 +801,19 @@ describe("ProjectRepository", () => {
       const where = {};
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(
-        repo.findAllCursor({ take: 2, sortBy: "name", sortDir: "asc" } as CursorListParams<ProjectSortBy>)
+        repo.findAllCursor({
+          take: 2,
+          sortBy: "name",
+          sortDir: "asc",
+        } as CursorListParams<ProjectSortBy>),
       ).rejects.toMatchObject({
         name: "DomainError",
         code: ERROR_CODES.VALIDATION_FAILED,
@@ -687,10 +826,16 @@ describe("ProjectRepository", () => {
       mocks.buildProjectWhere.mockReturnValueOnce(where);
 
       const unknown = new Error("db down");
-      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(
-        repo.findAllCursor({ take: 2, sortBy: "name", sortDir: "asc" } as CursorListParams<ProjectSortBy>)
+        repo.findAllCursor({
+          take: 2,
+          sortBy: "name",
+          sortDir: "asc",
+        } as CursorListParams<ProjectSortBy>),
       ).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
         status: 500,
@@ -722,28 +867,40 @@ describe("ProjectRepository", () => {
         } as any,
       ];
 
-      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(rows);
+      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(
+        rows,
+      );
 
       const result = await repo.findByOwnerId(ownerId);
 
-      expect(prismaMock.project.findMany).toHaveBeenCalledWith({ where: { ownerId } });
+      expect(prismaMock.project.findMany).toHaveBeenCalledWith({
+        where: { ownerId },
+      });
       expect(result).toEqual(rows);
     });
 
     it("returns empty array when no projects match", async () => {
       const ownerId = "u-empty";
-      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce([]);
+      (prismaMock.project.findMany as unknown as Mock).mockResolvedValueOnce(
+        [],
+      );
 
       const result = await repo.findByOwnerId(ownerId);
 
-      expect(prismaMock.project.findMany).toHaveBeenCalledWith({ where: { ownerId } });
+      expect(prismaMock.project.findMany).toHaveBeenCalledWith({
+        where: { ownerId },
+      });
       expect(result).toEqual([]);
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
       const ownerId = "boom";
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.findByOwnerId(ownerId)).rejects.toMatchObject({
         name: "DomainError",
@@ -755,7 +912,9 @@ describe("ProjectRepository", () => {
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const ownerId = "boom2";
       const unknown = new Error("db down");
-      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.findMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findByOwnerId(ownerId)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -771,7 +930,9 @@ describe("ProjectRepository", () => {
       const projectId = "p1";
       const when = new Date("2024-01-01T00:00:00Z");
 
-      (prismaMock.project.updateMany as unknown as Mock).mockResolvedValueOnce({ count: 1 });
+      (prismaMock.project.updateMany as unknown as Mock).mockResolvedValueOnce({
+        count: 1,
+      });
 
       const result = await repo.softDelete(projectId, when);
 
@@ -786,7 +947,9 @@ describe("ProjectRepository", () => {
       const projectId = "p2";
       const when = new Date("2024-01-02T00:00:00Z");
 
-      (prismaMock.project.updateMany as unknown as Mock).mockResolvedValueOnce({ count: 0 });
+      (prismaMock.project.updateMany as unknown as Mock).mockResolvedValueOnce({
+        count: 0,
+      });
 
       const result = await repo.softDelete(projectId, when);
 
@@ -801,8 +964,12 @@ describe("ProjectRepository", () => {
       const projectId = "p3";
       const when = new Date();
 
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.project.updateMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.project.updateMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.softDelete(projectId, when)).rejects.toMatchObject({
         name: "DomainError",
@@ -816,7 +983,9 @@ describe("ProjectRepository", () => {
       const when = new Date();
       const unknown = new Error("db down");
 
-      (prismaMock.project.updateMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.updateMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.softDelete(projectId, when)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -829,26 +998,36 @@ describe("ProjectRepository", () => {
 
   describe("hardDelete", () => {
     it("calls deleteMany with where.id and returns true when count>0", async () => {
-      (prismaMock.project.deleteMany as unknown as Mock).mockResolvedValueOnce({ count: 1 });
+      (prismaMock.project.deleteMany as unknown as Mock).mockResolvedValueOnce({
+        count: 1,
+      });
 
       const result = await repo.hardDelete("p1");
 
-      expect(prismaMock.project.deleteMany).toHaveBeenCalledWith({ where: { id: "p1" } });
+      expect(prismaMock.project.deleteMany).toHaveBeenCalledWith({
+        where: { id: "p1" },
+      });
       expect(result).toBe(true);
     });
 
     it("returns false when nothing was deleted (idempotent)", async () => {
-      (prismaMock.project.deleteMany as unknown as Mock).mockResolvedValueOnce({ count: 0 });
+      (prismaMock.project.deleteMany as unknown as Mock).mockResolvedValueOnce({
+        count: 0,
+      });
 
       const result = await repo.hardDelete("missing");
 
-      expect(prismaMock.project.deleteMany).toHaveBeenCalledWith({ where: { id: "missing" } });
+      expect(prismaMock.project.deleteMany).toHaveBeenCalledWith({
+        where: { id: "missing" },
+      });
       expect(result).toBe(false);
     });
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500 via mapper", async () => {
       const unknown = new Error("db down");
-      (prismaMock.project.deleteMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.deleteMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.hardDelete("p1")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -861,7 +1040,9 @@ describe("ProjectRepository", () => {
 
   describe("exists", () => {
     it("delegates to findUnique with where.id and select.id; returns true when row exists", async () => {
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "p1" });
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "p1",
+      });
 
       const result = await repo.exists("p1");
 
@@ -873,7 +1054,9 @@ describe("ProjectRepository", () => {
     });
 
     it("returns false when row is not found", async () => {
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.exists("missing");
 
@@ -885,8 +1068,12 @@ describe("ProjectRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.exists("x")).rejects.toMatchObject({
         name: "DomainError",
@@ -897,7 +1084,9 @@ describe("ProjectRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.exists("x")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -938,7 +1127,9 @@ describe("ProjectRepository", () => {
     });
 
     it("returns false when row is not found", async () => {
-      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.project.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.isSoftDeleted("missing");
 
@@ -950,8 +1141,12 @@ describe("ProjectRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.isSoftDeleted("boom")).rejects.toMatchObject({
         name: "DomainError",
@@ -962,7 +1157,9 @@ describe("ProjectRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.isSoftDeleted("boom2")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -990,7 +1187,9 @@ describe("ProjectRepository", () => {
         updatedAt: new Date(),
       };
 
-      (prismaMock.project.update as unknown as Mock).mockResolvedValueOnce(updated);
+      (prismaMock.project.update as unknown as Mock).mockResolvedValueOnce(
+        updated,
+      );
 
       const res = await repo.update(projectId, dto);
 
@@ -1016,7 +1215,9 @@ describe("ProjectRepository", () => {
         code: "P2025",
         clientVersion: "x",
       });
-      (prismaMock.project.update as unknown as Mock).mockRejectedValueOnce(p2025);
+      (prismaMock.project.update as unknown as Mock).mockRejectedValueOnce(
+        p2025,
+      );
 
       await expect(repo.update(projectId, dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -1032,7 +1233,9 @@ describe("ProjectRepository", () => {
       const dto: TUpdateProjectDto = { name: "X" };
 
       const unknown = new Error("db down");
-      (prismaMock.project.update as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.project.update as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.update(projectId, dto)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,

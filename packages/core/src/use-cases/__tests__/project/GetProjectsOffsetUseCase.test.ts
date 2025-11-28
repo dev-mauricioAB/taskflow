@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
 import type { ProjectRepository } from "@repo/infra";
-import type { TProjectOffsetPagination, OffsetPage, Project } from "@repo/shared";
+import type {
+  TProjectOffsetPagination,
+  OffsetPage,
+  Project,
+} from "@repo/shared";
 import { GetProjectsOffsetUseCase } from "../../project";
 
 function makeRepo(): Mocked<ProjectRepository> {
@@ -21,13 +25,13 @@ describe("GetProjectsOffsetUseCase", () => {
 
   it("parses string limit/offset, trims q to undefined when blank, defaults sortDir to desc", async () => {
     const input: TProjectOffsetPagination = {
-      q: "   ",                  // trim -> "" -> undefined
+      q: "   ", // trim -> "" -> undefined
       ownerId: "u1",
-      limit: "50" as any,        // -> 50
-      offset: "10" as any,       // -> 10
+      limit: "50" as any, // -> 50
+      offset: "10" as any, // -> 10
       // sortDir omitted -> desc
       // sortBy passed as undefined
-      includeDeleted: 0 as any,  // falsy -> false
+      includeDeleted: 0 as any, // falsy -> false
     };
 
     const page: OffsetPage<Project, any> = {

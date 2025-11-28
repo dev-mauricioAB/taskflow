@@ -117,7 +117,7 @@ describe("CompleteTaskUseCase", () => {
     await uc.execute("t3");
 
     // markAsCompleted receives the same Date used for event payload
-    const passedDate = (tasks.markAsCompleted.mock.calls[0]?.[1]) as Date;
+    const passedDate = tasks.markAsCompleted.mock.calls[0]?.[1] as Date;
     expect(passedDate).toEqual(fixed);
 
     expect(events.publish).toHaveBeenCalledWith(TASK_COMPLETED, {

@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
 import type { IProjectRepository, IEventPublisher } from "@repo/infra";
 import { DomainError } from "@repo/infra";
-import type { Project, ProjectUpdatedPayload, TUpdateProjectDto } from "@repo/shared";
+import type {
+  Project,
+  ProjectUpdatedPayload,
+  TUpdateProjectDto,
+} from "@repo/shared";
 import { PROJECT_UPDATED } from "@repo/shared";
 import { UpdateProjectUseCase } from "../../project";
 
@@ -93,14 +97,11 @@ describe("UpdateProjectUseCase", () => {
       changed: { name: "New Name" },
     });
 
-    expect(events.publish).toHaveBeenCalledWith(
-      PROJECT_UPDATED,
-      {
-        projectId: "p1",
-        changed: { name: "New Name" },
-        updatedAt: fixed.toISOString(),
-      },
-    );
+    expect(events.publish).toHaveBeenCalledWith(PROJECT_UPDATED, {
+      projectId: "p1",
+      changed: { name: "New Name" },
+      updatedAt: fixed.toISOString(),
+    });
 
     vi.useRealTimers();
   });
@@ -134,7 +135,10 @@ describe("UpdateProjectUseCase", () => {
     });
 
     const payload = events.publish.mock.calls[0]?.[1] as ProjectUpdatedPayload;
-    expect(payload.changed).toEqual({ name: "Alpha", description: "About Alpha" });
+    expect(payload.changed).toEqual({
+      name: "Alpha",
+      description: "About Alpha",
+    });
   });
 
   it("includes ownerId in changed only if included in intended keys", async () => {

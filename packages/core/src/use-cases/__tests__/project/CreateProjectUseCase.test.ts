@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
-import type { IProjectRepository, IEventPublisher, NewEntity } from "@repo/infra";
+import type {
+  IProjectRepository,
+  IEventPublisher,
+  NewEntity,
+} from "@repo/infra";
 import type { Project } from "@repo/shared";
 import { PROJECT_CREATED } from "@repo/shared";
 import { CreateProjectUseCase } from "../../project";

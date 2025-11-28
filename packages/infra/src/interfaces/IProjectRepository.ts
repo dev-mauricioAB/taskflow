@@ -26,6 +26,6 @@ export interface IProjectRepository extends IRepository<Project, string> {
 
   // Cursor-based
   findAllCursor(
-    params: CursorListParams<ProjectSortBy> & ProjectFilters
+    params: CursorListParams<ProjectSortBy> & ProjectFilters,
   ): Promise<CursorPage<Project, ProjectSortBy>>;
 }

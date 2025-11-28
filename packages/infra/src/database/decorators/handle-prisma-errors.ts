@@ -25,7 +25,7 @@ export function HandlePrismaErrors<T extends (...args: any[]) => any>(
 }
 
 // Class decorator - applies HandlePrismaErrors to all methods
-export function HandleAllPrismaErrors<T extends { new(...args: any[]): {} }>(
+export function HandleAllPrismaErrors<T extends { new (...args: any[]): {} }>(
   constructor: T,
 ) {
   // Get all property names from the prototype

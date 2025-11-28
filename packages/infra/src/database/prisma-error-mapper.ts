@@ -3,8 +3,6 @@ import { ERROR_CODES, httpStatusByCode } from "@repo/shared";
 import { DomainError } from "../errors";
 
 export function mapPrismaToDomainError(err: unknown): DomainError {
-  debugger
-
   // Handle Prisma Known Request Errors (P2xxx codes)
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {

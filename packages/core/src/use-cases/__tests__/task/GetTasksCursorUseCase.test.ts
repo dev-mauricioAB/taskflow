@@ -25,11 +25,11 @@ describe("GetTasksCursorUseCase", () => {
       projectId: "p1",
       userId: "u1",
       status: "todo",
-      take: "25" as any,       // string -> number
+      take: "25" as any, // string -> number
       cursor: "abc123" as any, // string -> { id }
-      sortBy: 'id',
-      sortDir: 'asc',
-      includeDeleted: false
+      sortBy: "id",
+      sortDir: "asc",
+      includeDeleted: false,
     };
 
     const page: CursorPage<Task, any> = {
@@ -63,7 +63,7 @@ describe("GetTasksCursorUseCase", () => {
       cursor: { id: "last" } as any,
       sortDir: "desc",
       sortBy: "createdAt" as any,
-      includeDeleted: false
+      includeDeleted: false,
     };
 
     const page = {
@@ -94,7 +94,13 @@ describe("GetTasksCursorUseCase", () => {
   it("defaults take to 20 and omits cursor when not provided", async () => {
     const input = {} as unknown as TTaskCursorPagination;
 
-    const page = { data: [], nextCursor: undefined, prevCursor: undefined, sortBy: "id", sortDir: "asc" } as any;
+    const page = {
+      data: [],
+      nextCursor: undefined,
+      prevCursor: undefined,
+      sortBy: "id",
+      sortDir: "asc",
+    } as any;
     repo.findAllCursor.mockResolvedValueOnce(page);
 
     const result = await uc.execute(input);
@@ -114,7 +120,9 @@ describe("GetTasksCursorUseCase", () => {
   });
 
   it("casts includeDeleted to boolean", async () => {
-    const input = { includeDeleted: "1" as any } as unknown as TTaskCursorPagination;
+    const input = {
+      includeDeleted: "1" as any,
+    } as unknown as TTaskCursorPagination;
 
     repo.findAllCursor.mockResolvedValueOnce({
       data: [],
@@ -139,7 +147,7 @@ describe("GetTasksCursorUseCase", () => {
       status: "inProgress",
       take: "5" as any,
       includeDeleted: false,
-      sortBy: 'id',
+      sortBy: "id",
       sortDir: "asc",
     };
 

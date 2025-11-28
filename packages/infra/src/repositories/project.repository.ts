@@ -9,7 +9,10 @@ import {
   TCreateProjectDto,
   TUpdateProjectDto,
 } from "@repo/shared";
-import { IProjectRepository, ProjectFilters } from "../interfaces/IProjectRepository";
+import {
+  IProjectRepository,
+  ProjectFilters,
+} from "../interfaces/IProjectRepository";
 import { NewEntity } from "../interfaces";
 import { buildProjectWhere } from "./helpers";
 import { DomainError } from "../errors";

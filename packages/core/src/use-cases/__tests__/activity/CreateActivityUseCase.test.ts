@@ -72,16 +72,13 @@ describe("CreateActivityUseCase", () => {
     const result = await uc.execute(baseInput);
 
     expect(repo.create).toHaveBeenCalledWith(baseInput);
-    expect(events.publish).toHaveBeenCalledWith(
-      ACTIVITY_CREATED,
-      {
-        activityId: "a1",
-        taskId: "t1",
-        actorId: "u1",
-        type: "comment",
-        createdAt: createdAt.toISOString(),
-      },
-    );
+    expect(events.publish).toHaveBeenCalledWith(ACTIVITY_CREATED, {
+      activityId: "a1",
+      taskId: "t1",
+      actorId: "u1",
+      type: "comment",
+      createdAt: createdAt.toISOString(),
+    });
     expect(result).toBe(activity);
   });
 
@@ -99,13 +96,23 @@ describe("CreateActivityUseCase", () => {
       deletedAt: null,
     } as any);
 
-    const res = await uc.execute({ ...baseInput, taskId: "t2", actorId: "u2", type: "created" as any });
+    const res = await uc.execute({
+      ...baseInput,
+      taskId: "t2",
+      actorId: "u2",
+      type: "created" as any,
+    });
     expect(repo.create).toHaveBeenCalledTimes(1);
     // cannot assert events.publish here because it's undefined in the use case
   });
 
   it("supports all allowed types: created, updated, status_changed, comment", async () => {
-    const allowed: ActivityType[] = ["created", "updated", "status_changed", "comment"] as any;
+    const allowed: ActivityType[] = [
+      "created",
+      "updated",
+      "status_changed",
+      "comment",
+    ] as any;
 
     for (const type of allowed) {
       const uc = new CreateActivityUseCase(repo, events);

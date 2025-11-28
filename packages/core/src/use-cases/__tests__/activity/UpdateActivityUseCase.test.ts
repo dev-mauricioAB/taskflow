@@ -32,13 +32,13 @@ describe("UpdateActivityUseCase", () => {
   it("throws NOT_FOUND when activity does not exist", async () => {
     repo.exists.mockResolvedValueOnce(false);
 
-    await expect(
-      uc.execute("missing", { message: "x" }),
-    ).rejects.toMatchObject({
-      name: "DomainError",
-      code: "NOT_FOUND",
-      message: "Activity 'missing' not found",
-    });
+    await expect(uc.execute("missing", { message: "x" })).rejects.toMatchObject(
+      {
+        name: "DomainError",
+        code: "NOT_FOUND",
+        message: "Activity 'missing' not found",
+      },
+    );
 
     expect(repo.update).not.toHaveBeenCalled();
     expect(events.publish).not.toHaveBeenCalled();
@@ -47,9 +47,7 @@ describe("UpdateActivityUseCase", () => {
   it("rejects empty message after trim with VALIDATION_FAILED", async () => {
     repo.exists.mockResolvedValueOnce(true);
 
-    await expect(
-      uc.execute("a1", { message: "   " }),
-    ).rejects.toMatchObject({
+    await expect(uc.execute("a1", { message: "   " })).rejects.toMatchObject({
       name: "DomainError",
       code: "VALIDATION_FAILED",
       message: "Message cannot be empty",
@@ -89,14 +87,11 @@ describe("UpdateActivityUseCase", () => {
 
     expect(result).toEqual({ changed: { message: "Edited" } });
 
-    expect(events.publish).toHaveBeenCalledWith(
-      ACTIVITY_UPDATED,
-      {
-        activityId: "a1",
-        changed: { message: "Edited" },
-        occurredAt: fixed.toISOString(),
-      },
-    );
+    expect(events.publish).toHaveBeenCalledWith(ACTIVITY_UPDATED, {
+      activityId: "a1",
+      changed: { message: "Edited" },
+      occurredAt: fixed.toISOString(),
+    });
 
     vi.useRealTimers();
   });

@@ -27,7 +27,7 @@ describe("GetUsersOffsetUseCase", () => {
       offset: "10" as any,
       includeDeleted: 1 as any, // truthy
       sortBy: "name" as any,
-      sortDir: 'desc'
+      sortDir: "desc",
       // sortDir omitted -> desc
     };
 

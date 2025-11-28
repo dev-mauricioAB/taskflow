@@ -21,8 +21,26 @@ describe("GetActivitiesByTaskIdUseCase", () => {
 
   it("delegates to repo.findActivityByTaskId with params.id and returns activities", async () => {
     const rows: Activity[] = [
-      { id: "a1", taskId: "t1", actorId: "u1", type: "comment", message: "m1", createdAt: new Date(), updatedAt: new Date(), deletedAt: null } as any,
-      { id: "a2", taskId: "t1", actorId: "u2", type: "updated", message: "m2", createdAt: new Date(), updatedAt: new Date(), deletedAt: null } as any,
+      {
+        id: "a1",
+        taskId: "t1",
+        actorId: "u1",
+        type: "comment",
+        message: "m1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any,
+      {
+        id: "a2",
+        taskId: "t1",
+        actorId: "u2",
+        type: "updated",
+        message: "m2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any,
     ];
 
     repo.findActivityByTaskId.mockResolvedValueOnce(rows);

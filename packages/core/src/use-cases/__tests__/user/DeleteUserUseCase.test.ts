@@ -91,7 +91,9 @@ describe("DeleteUserUseCase", () => {
   it("throws NOT_FOUND when hard delete affects no rows and does not publish", async () => {
     repo.hardDelete.mockResolvedValueOnce(false);
 
-    await expect(uc.execute({ userId: "missing", hard: true })).rejects.toMatchObject({
+    await expect(
+      uc.execute({ userId: "missing", hard: true }),
+    ).rejects.toMatchObject({
       name: "DomainError",
       code: "NOT_FOUND",
       message: "User not found",

@@ -134,7 +134,10 @@ describe("CreateUserUseCase", () => {
     await uc.execute(input);
 
     expect(repo.findByEmail).toHaveBeenCalledWith("zoe@example.com");
-    expect(repo.create).toHaveBeenCalledWith({ name: "Zoe", email: "zoe@example.com" });
+    expect(repo.create).toHaveBeenCalledWith({
+      name: "Zoe",
+      email: "zoe@example.com",
+    });
   });
 
   it("maps repository unique race (EMAIL_IN_USE) to DomainError and does not publish event", async () => {

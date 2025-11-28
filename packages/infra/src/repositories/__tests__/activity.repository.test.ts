@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-import type { Activity as PrismaActivity, User as PrismaUser, Task as PrismaTask } from "@prisma/client";
+import type {
+  Activity as PrismaActivity,
+  User as PrismaUser,
+  Task as PrismaTask,
+} from "@prisma/client";
 import { prismaMock } from "../../database/__mocks__/prisma";
 
 // Ensure repository uses the mocked prisma
@@ -9,13 +13,18 @@ vi.mock("../../database/prisma.client", () => ({
 
 // Keep real mapper so the decorator path is exercised end-to-end
 vi.mock("../../database/prisma-error-mapper", async (orig) => {
-  const real = await orig<typeof import("../../database/prisma-error-mapper")>();
+  const real =
+    await orig<typeof import("../../database/prisma-error-mapper")>();
   return { ...real };
 });
 
 import { Prisma } from "@prisma/client";
 import { ActivityRepository } from "../activity.repository";
-import { ERROR_CODES, TCreateActivityDto, TUpdateActivityDto } from "@repo/shared";
+import {
+  ERROR_CODES,
+  TCreateActivityDto,
+  TUpdateActivityDto,
+} from "@repo/shared";
 
 describe("ActivityRepository", () => {
   let repo: ActivityRepository;
@@ -25,7 +34,7 @@ describe("ActivityRepository", () => {
     repo = new ActivityRepository();
   });
 
-  describe('create', () => {
+  describe("create", () => {
     it("throws DomainError NOT_FOUND when actor user does not exist", async () => {
       const dto: TCreateActivityDto = {
         taskId: "t1",
@@ -34,7 +43,9 @@ describe("ActivityRepository", () => {
         message: "  hello  ",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -42,7 +53,9 @@ describe("ActivityRepository", () => {
         message: "User not found",
       });
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u-missing" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u-missing" },
+      });
       expect(prismaMock.task.findUnique).not.toHaveBeenCalled();
       expect(prismaMock.activity.create).not.toHaveBeenCalled();
     });
@@ -55,8 +68,12 @@ describe("ActivityRepository", () => {
         message: "  hello  ",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -64,8 +81,12 @@ describe("ActivityRepository", () => {
         message: "Task not found",
       });
 
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { id: "u1" } });
-      expect(prismaMock.task.findUnique).toHaveBeenCalledWith({ where: { id: "t-missing" } });
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u1" },
+      });
+      expect(prismaMock.task.findUnique).toHaveBeenCalledWith({
+        where: { id: "t-missing" },
+      });
       expect(prismaMock.activity.create).not.toHaveBeenCalled();
     });
 
@@ -77,8 +98,12 @@ describe("ActivityRepository", () => {
         message: "  some message  ",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "t1" } as PrismaTask);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "t1",
+      } as PrismaTask);
 
       const created: PrismaActivity = {
         id: "a1",
@@ -90,7 +115,9 @@ describe("ActivityRepository", () => {
         updatedAt: new Date(),
       } as any;
 
-      (prismaMock.activity.create as unknown as Mock).mockResolvedValueOnce(created);
+      (prismaMock.activity.create as unknown as Mock).mockResolvedValueOnce(
+        created,
+      );
 
       const result = await repo.create(dto);
 
@@ -113,21 +140,31 @@ describe("ActivityRepository", () => {
         message: undefined,
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "t1" } as PrismaTask);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "t1",
+      } as PrismaTask);
 
-      (prismaMock.activity.create as unknown as Mock).mockResolvedValueOnce({ id: "a1" });
+      (prismaMock.activity.create as unknown as Mock).mockResolvedValueOnce({
+        id: "a1",
+      });
 
       await repo.create(dto);
 
-      const arg = (prismaMock.activity.create as unknown as Mock).mock.calls.at(-1)?.[0];
+      const arg = (prismaMock.activity.create as unknown as Mock).mock.calls.at(
+        -1,
+      )?.[0];
       expect(arg.data).toMatchObject({
         taskId: "t1",
         actorId: "u1",
         type: "status_changed",
       });
       // message should exist as undefined if you keep message?.trim()
-      expect(Object.prototype.hasOwnProperty.call(arg.data, "message")).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(arg.data, "message")).toBe(
+        true,
+      );
       expect(arg.data.message).toBeUndefined();
     });
 
@@ -139,15 +176,21 @@ describe("ActivityRepository", () => {
         message: "dup",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "t1" } as PrismaTask);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "t1",
+      } as PrismaTask);
 
       const p2002 = new Prisma.PrismaClientKnownRequestError("unique", {
         code: "P2002",
         clientVersion: "x",
         meta: { target: ["Activity_unique_field"] }, // adjust to actual unique index if any
       });
-      (prismaMock.activity.create as unknown as Mock).mockRejectedValueOnce(p2002);
+      (prismaMock.activity.create as unknown as Mock).mockRejectedValueOnce(
+        p2002,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -166,11 +209,17 @@ describe("ActivityRepository", () => {
         message: "hello",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "t1" } as PrismaTask);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "t1",
+      } as PrismaTask);
 
       const unknown = new Error("db down");
-      (prismaMock.activity.create as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.create as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -188,8 +237,12 @@ describe("ActivityRepository", () => {
         message: "x",
       };
 
-      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "u1" } as PrismaUser);
-      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+        id: "u1",
+      } as PrismaUser);
+      (prismaMock.task.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(repo.create(dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -197,7 +250,7 @@ describe("ActivityRepository", () => {
         message: "Task not found",
       });
     });
-  })
+  });
 
   describe("save", () => {
     it("updates only message by id", async () => {
@@ -224,7 +277,9 @@ describe("ActivityRepository", () => {
         code: "P2025",
         clientVersion: "x",
       });
-      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(p2025);
+      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(
+        p2025,
+      );
 
       await expect(repo.save(activity)).rejects.toMatchObject({
         name: "DomainError",
@@ -239,7 +294,9 @@ describe("ActivityRepository", () => {
       const activity = { id: "a1", message: "X" } as any;
 
       const unknown = new Error("db down");
-      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.save(activity)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -256,7 +313,9 @@ describe("ActivityRepository", () => {
 
       await repo.delete("a1");
 
-      expect(prismaMock.activity.delete).toHaveBeenCalledWith({ where: { id: "a1" } });
+      expect(prismaMock.activity.delete).toHaveBeenCalledWith({
+        where: { id: "a1" },
+      });
     });
 
     it("maps P2025 (record not found) to DomainError NOT_FOUND 404", async () => {
@@ -264,7 +323,9 @@ describe("ActivityRepository", () => {
         code: "P2025",
         clientVersion: "x",
       });
-      (prismaMock.activity.delete as unknown as Mock).mockRejectedValueOnce(p2025);
+      (prismaMock.activity.delete as unknown as Mock).mockRejectedValueOnce(
+        p2025,
+      );
 
       await expect(repo.delete("missing")).rejects.toMatchObject({
         name: "DomainError",
@@ -277,7 +338,9 @@ describe("ActivityRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.activity.delete as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.delete as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.delete("a1")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -301,7 +364,9 @@ describe("ActivityRepository", () => {
         updatedAt: new Date(),
       } as any;
 
-      (prismaMock.activity.findFirst as unknown as Mock).mockResolvedValueOnce(row);
+      (prismaMock.activity.findFirst as unknown as Mock).mockResolvedValueOnce(
+        row,
+      );
 
       const result = await repo.findById("a1");
 
@@ -312,7 +377,9 @@ describe("ActivityRepository", () => {
     });
 
     it("returns null when not found or soft-deleted", async () => {
-      (prismaMock.activity.findFirst as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.activity.findFirst as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.findById("missing");
 
@@ -323,8 +390,12 @@ describe("ActivityRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.activity.findFirst as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.activity.findFirst as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.findById("x")).rejects.toMatchObject({
         name: "DomainError",
@@ -335,7 +406,9 @@ describe("ActivityRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.activity.findFirst as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.findFirst as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findById("x")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -350,11 +423,31 @@ describe("ActivityRepository", () => {
     it("delegates to findMany with taskId and deletedAt null, ordered by createdAt asc; returns rows", async () => {
       const id = "t1";
       const rows: PrismaActivity[] = [
-        { id: "a1", taskId: id, actorId: "u1", type: "comment" as any, message: "m1", deletedAt: null, createdAt: new Date("2024-01-01"), updatedAt: new Date() } as any,
-        { id: "a2", taskId: id, actorId: "u2", type: "status_changed" as any, message: "m2", deletedAt: null, createdAt: new Date("2024-01-02"), updatedAt: new Date() } as any,
+        {
+          id: "a1",
+          taskId: id,
+          actorId: "u1",
+          type: "comment" as any,
+          message: "m1",
+          deletedAt: null,
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date(),
+        } as any,
+        {
+          id: "a2",
+          taskId: id,
+          actorId: "u2",
+          type: "status_changed" as any,
+          message: "m2",
+          deletedAt: null,
+          createdAt: new Date("2024-01-02"),
+          updatedAt: new Date(),
+        } as any,
       ];
 
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(rows);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        rows,
+      );
 
       const result = await repo.findActivityByTaskId(id);
 
@@ -366,7 +459,9 @@ describe("ActivityRepository", () => {
     });
 
     it("returns empty array when no activities match", async () => {
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce([]);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        [],
+      );
 
       const result = await repo.findActivityByTaskId("t-empty");
 
@@ -378,8 +473,12 @@ describe("ActivityRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.findActivityByTaskId("x")).rejects.toMatchObject({
         name: "DomainError",
@@ -390,7 +489,9 @@ describe("ActivityRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findActivityByTaskId("x")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -404,10 +505,30 @@ describe("ActivityRepository", () => {
   describe("ActivityRepository.findMany", () => {
     it("builds where with deletedAt null only when no filters provided", async () => {
       const rows: PrismaActivity[] = [
-        { id: "a2", taskId: "t1", actorId: "u1", type: "comment" as any, message: "m2", deletedAt: null, createdAt: new Date("2024-01-02"), updatedAt: new Date() } as any,
-        { id: "a1", taskId: "t1", actorId: "u1", type: "comment" as any, message: "m1", deletedAt: null, createdAt: new Date("2024-01-01"), updatedAt: new Date() } as any,
+        {
+          id: "a2",
+          taskId: "t1",
+          actorId: "u1",
+          type: "comment" as any,
+          message: "m2",
+          deletedAt: null,
+          createdAt: new Date("2024-01-02"),
+          updatedAt: new Date(),
+        } as any,
+        {
+          id: "a1",
+          taskId: "t1",
+          actorId: "u1",
+          type: "comment" as any,
+          message: "m1",
+          deletedAt: null,
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date(),
+        } as any,
       ];
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(rows);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        rows,
+      );
 
       const result = await repo.findMany({});
 
@@ -419,7 +540,9 @@ describe("ActivityRepository", () => {
     });
 
     it("applies taskId filter", async () => {
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce([]);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        [],
+      );
 
       await repo.findMany({ taskId: "t1" });
 
@@ -430,7 +553,9 @@ describe("ActivityRepository", () => {
     });
 
     it("applies actorId filter", async () => {
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce([]);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        [],
+      );
 
       await repo.findMany({ actorId: "u1" });
 
@@ -441,7 +566,9 @@ describe("ActivityRepository", () => {
     });
 
     it("applies type filter", async () => {
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce([]);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        [],
+      );
 
       await repo.findMany({ type: "status_changed" });
 
@@ -452,18 +579,27 @@ describe("ActivityRepository", () => {
     });
 
     it("applies multiple filters together", async () => {
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce([]);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        [],
+      );
 
       await repo.findMany({ taskId: "t1", actorId: "u2", type: "comment" });
 
       expect(prismaMock.activity.findMany).toHaveBeenCalledWith({
-        where: { deletedAt: null, taskId: "t1", actorId: "u2", type: "comment" },
+        where: {
+          deletedAt: null,
+          taskId: "t1",
+          actorId: "u2",
+          type: "comment",
+        },
         orderBy: { createdAt: "desc" },
       });
     });
 
     it("returns empty array when no activities match", async () => {
-      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce([]);
+      (prismaMock.activity.findMany as unknown as Mock).mockResolvedValueOnce(
+        [],
+      );
 
       const result = await repo.findMany({ taskId: "t-empty" });
 
@@ -471,8 +607,12 @@ describe("ActivityRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.findMany({ actorId: "x" })).rejects.toMatchObject({
         name: "DomainError",
@@ -483,7 +623,9 @@ describe("ActivityRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.findMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.findMany({})).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -499,7 +641,9 @@ describe("ActivityRepository", () => {
       const activityId = "a1";
       const when = new Date("2024-01-01T00:00:00Z");
 
-      (prismaMock.activity.updateMany as unknown as Mock).mockResolvedValueOnce({ count: 1 });
+      (prismaMock.activity.updateMany as unknown as Mock).mockResolvedValueOnce(
+        { count: 1 },
+      );
 
       const result = await repo.softDelete(activityId, when);
 
@@ -514,7 +658,9 @@ describe("ActivityRepository", () => {
       const activityId = "a2";
       const when = new Date("2024-01-02T00:00:00Z");
 
-      (prismaMock.activity.updateMany as unknown as Mock).mockResolvedValueOnce({ count: 0 });
+      (prismaMock.activity.updateMany as unknown as Mock).mockResolvedValueOnce(
+        { count: 0 },
+      );
 
       const result = await repo.softDelete(activityId, when);
 
@@ -529,8 +675,12 @@ describe("ActivityRepository", () => {
       const activityId = "boom";
       const when = new Date();
 
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.activity.updateMany as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.activity.updateMany as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.softDelete(activityId, when)).rejects.toMatchObject({
         name: "DomainError",
@@ -544,7 +694,9 @@ describe("ActivityRepository", () => {
       const when = new Date();
       const unknown = new Error("db down");
 
-      (prismaMock.activity.updateMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.updateMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.softDelete(activityId, when)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -557,26 +709,36 @@ describe("ActivityRepository", () => {
 
   describe("hardDelete", () => {
     it("calls deleteMany with where.id and returns true when count>0", async () => {
-      (prismaMock.activity.deleteMany as unknown as Mock).mockResolvedValueOnce({ count: 1 });
+      (prismaMock.activity.deleteMany as unknown as Mock).mockResolvedValueOnce(
+        { count: 1 },
+      );
 
       const result = await repo.hardDelete("a1");
 
-      expect(prismaMock.activity.deleteMany).toHaveBeenCalledWith({ where: { id: "a1" } });
+      expect(prismaMock.activity.deleteMany).toHaveBeenCalledWith({
+        where: { id: "a1" },
+      });
       expect(result).toBe(true);
     });
 
     it("returns false when nothing was deleted (idempotent)", async () => {
-      (prismaMock.activity.deleteMany as unknown as Mock).mockResolvedValueOnce({ count: 0 });
+      (prismaMock.activity.deleteMany as unknown as Mock).mockResolvedValueOnce(
+        { count: 0 },
+      );
 
       const result = await repo.hardDelete("missing");
 
-      expect(prismaMock.activity.deleteMany).toHaveBeenCalledWith({ where: { id: "missing" } });
+      expect(prismaMock.activity.deleteMany).toHaveBeenCalledWith({
+        where: { id: "missing" },
+      });
       expect(result).toBe(false);
     });
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500 via mapper", async () => {
       const unknown = new Error("db down");
-      (prismaMock.activity.deleteMany as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.deleteMany as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.hardDelete("a1")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -589,7 +751,9 @@ describe("ActivityRepository", () => {
 
   describe("exists", () => {
     it("delegates to findUnique with where.id and select.id; returns true when row exists", async () => {
-      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce({ id: "a1" });
+      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce(
+        { id: "a1" },
+      );
 
       const result = await repo.exists("a1");
 
@@ -601,7 +765,9 @@ describe("ActivityRepository", () => {
     });
 
     it("returns false when row is not found", async () => {
-      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.exists("missing");
 
@@ -613,8 +779,12 @@ describe("ActivityRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.exists("x")).rejects.toMatchObject({
         name: "DomainError",
@@ -625,7 +795,9 @@ describe("ActivityRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.exists("x")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -638,9 +810,11 @@ describe("ActivityRepository", () => {
 
   describe("isSoftDeleted", () => {
     it("delegates to findUnique with where.id and select.deletedAt; returns true when deletedAt is non-null", async () => {
-      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce({
-        deletedAt: new Date("2024-01-01T00:00:00Z"),
-      });
+      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce(
+        {
+          deletedAt: new Date("2024-01-01T00:00:00Z"),
+        },
+      );
 
       const result = await repo.isSoftDeleted("a1");
 
@@ -652,9 +826,11 @@ describe("ActivityRepository", () => {
     });
 
     it("returns false when row exists but deletedAt is null", async () => {
-      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce({
-        deletedAt: null,
-      });
+      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce(
+        {
+          deletedAt: null,
+        },
+      );
 
       const result = await repo.isSoftDeleted("a2");
 
@@ -666,7 +842,9 @@ describe("ActivityRepository", () => {
     });
 
     it("returns false when row is not found", async () => {
-      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce(null);
+      (prismaMock.activity.findUnique as unknown as Mock).mockResolvedValueOnce(
+        null,
+      );
 
       const result = await repo.isSoftDeleted("missing");
 
@@ -678,8 +856,12 @@ describe("ActivityRepository", () => {
     });
 
     it("maps Prisma validation errors via decorator/mapper and throws DomainError", async () => {
-      const validation = new Prisma.PrismaClientValidationError("validation", { clientVersion: '' });
-      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(validation);
+      const validation = new Prisma.PrismaClientValidationError("validation", {
+        clientVersion: "",
+      });
+      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(
+        validation,
+      );
 
       await expect(repo.isSoftDeleted("x")).rejects.toMatchObject({
         name: "DomainError",
@@ -690,7 +872,9 @@ describe("ActivityRepository", () => {
 
     it("maps unknown errors to INTERNAL_SERVER_ERROR 500", async () => {
       const unknown = new Error("db down");
-      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.findUnique as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.isSoftDeleted("x")).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
@@ -712,7 +896,9 @@ describe("ActivityRepository", () => {
         createdAt: new Date("2024-01-01T00:00:00Z"),
       };
 
-      (prismaMock.activity.update as unknown as Mock).mockResolvedValueOnce(updated);
+      (prismaMock.activity.update as unknown as Mock).mockResolvedValueOnce(
+        updated,
+      );
 
       const res = await repo.update(activityId, dto);
 
@@ -736,7 +922,9 @@ describe("ActivityRepository", () => {
         code: "P2025",
         clientVersion: "x",
       });
-      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(p2025);
+      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(
+        p2025,
+      );
 
       await expect(repo.update(activityId, dto)).rejects.toMatchObject({
         name: "DomainError",
@@ -752,7 +940,9 @@ describe("ActivityRepository", () => {
       const dto: TUpdateActivityDto = { message: "Edited" };
 
       const unknown = new Error("db down");
-      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(unknown);
+      (prismaMock.activity.update as unknown as Mock).mockRejectedValueOnce(
+        unknown,
+      );
 
       await expect(repo.update(activityId, dto)).rejects.toMatchObject({
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,

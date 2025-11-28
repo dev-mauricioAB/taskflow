@@ -3,7 +3,7 @@ import { DomainError, TaskRepository } from "@repo/infra";
 import { TTaskParamsDto } from "@repo/shared";
 
 export class GetTaskByIdUseCase {
-  constructor(private readonly repo: TaskRepository) { }
+  constructor(private readonly repo: TaskRepository) {}
   async execute(params: TTaskParamsDto) {
     const task = await this.repo.findById(params.id);
 

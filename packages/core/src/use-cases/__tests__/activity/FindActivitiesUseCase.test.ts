@@ -27,7 +27,16 @@ describe("FindActivitiesUseCase", () => {
     } as any;
 
     const rows: Activity[] = [
-      { id: "a1", taskId: "t1", actorId: "u1", type: "comment", message: "m", createdAt: new Date(), updatedAt: new Date(), deletedAt: null } as any,
+      {
+        id: "a1",
+        taskId: "t1",
+        actorId: "u1",
+        type: "comment",
+        message: "m",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      } as any,
     ];
 
     repo.findMany.mockResolvedValueOnce(rows);

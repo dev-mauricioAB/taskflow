@@ -43,7 +43,7 @@ export class ActivityRepository implements IActivityRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.activity.delete({ where: { id } })
+    await prisma.activity.delete({ where: { id } });
   }
 
   async findById(id: string): Promise<Activity | null> {

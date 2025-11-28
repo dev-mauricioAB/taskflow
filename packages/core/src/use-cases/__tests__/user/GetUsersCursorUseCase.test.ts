@@ -23,11 +23,11 @@ describe("GetUsersCursorUseCase", () => {
   it("trims q, clamps take to [-100, 100], coerces cursor from string, defaults sortDir desc", async () => {
     const input: TUserCursorPagination = {
       q: "  alice  ",
-      take: 999,               // clamp to 100
-      cursor: { id: 'abc123' },        // string → { id: "abc123" }
+      take: 999, // clamp to 100
+      cursor: { id: "abc123" }, // string → { id: "abc123" }
       includeDeleted: 1 as any, // truthy → true
       sortBy: "name" as any,
-      sortDir: 'desc'
+      sortDir: "desc",
       // sortDir omitted → default "desc"
     };
 
@@ -55,14 +55,20 @@ describe("GetUsersCursorUseCase", () => {
 
   it("respects negative take and clamps to -100; accepts object cursor", async () => {
     const input: TUserCursorPagination = {
-      take: -250,                         // clamp to -100
-      cursor: { id: "last-id" } as any,   // object → { id }
+      take: -250, // clamp to -100
+      cursor: { id: "last-id" } as any, // object → { id }
       sortBy: "createdAt" as any,
       sortDir: "asc",
-      includeDeleted: false
+      includeDeleted: false,
     };
 
-    const page = { data: [], nextCursor: undefined, prevCursor: undefined, sortBy: "createdAt", sortDir: "asc" } as any;
+    const page = {
+      data: [],
+      nextCursor: undefined,
+      prevCursor: undefined,
+      sortBy: "createdAt",
+      sortDir: "asc",
+    } as any;
     repo.findAllCursor.mockResolvedValueOnce(page);
 
     const result = await uc.execute(input);
@@ -79,9 +85,18 @@ describe("GetUsersCursorUseCase", () => {
   });
 
   it("defaults take to 20 when missing or not a number, omits cursor when not provided", async () => {
-    const input = { q: undefined, includeDeleted: undefined } as unknown as TUserCursorPagination;
+    const input = {
+      q: undefined,
+      includeDeleted: undefined,
+    } as unknown as TUserCursorPagination;
 
-    const page = { data: [], nextCursor: undefined, prevCursor: undefined, sortBy: undefined, sortDir: "desc" } as any;
+    const page = {
+      data: [],
+      nextCursor: undefined,
+      prevCursor: undefined,
+      sortBy: undefined,
+      sortDir: "desc",
+    } as any;
     repo.findAllCursor.mockResolvedValueOnce(page);
 
     const result = await uc.execute(input);
@@ -103,7 +118,13 @@ describe("GetUsersCursorUseCase", () => {
       sortDir: "up" as any, // invalid → default to "desc"
     } as unknown as TUserCursorPagination;
 
-    const page = { data: [], nextCursor: undefined, prevCursor: undefined, sortBy: "email", sortDir: "desc" } as any;
+    const page = {
+      data: [],
+      nextCursor: undefined,
+      prevCursor: undefined,
+      sortBy: "email",
+      sortDir: "desc",
+    } as any;
     repo.findAllCursor.mockResolvedValueOnce(page);
 
     const result = await uc.execute(input);
@@ -122,7 +143,13 @@ describe("GetUsersCursorUseCase", () => {
   it("trims q to empty string → undefined", async () => {
     const input = { q: "   " } as unknown as TUserCursorPagination;
 
-    const page = { data: [], nextCursor: undefined, prevCursor: undefined, sortBy: undefined, sortDir: "desc" } as any;
+    const page = {
+      data: [],
+      nextCursor: undefined,
+      prevCursor: undefined,
+      sortBy: undefined,
+      sortDir: "desc",
+    } as any;
     repo.findAllCursor.mockResolvedValueOnce(page);
 
     await uc.execute(input);

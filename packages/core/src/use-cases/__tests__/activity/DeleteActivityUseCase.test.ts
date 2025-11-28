@@ -58,14 +58,11 @@ describe("DeleteActivityUseCase", () => {
     expect(repo.softDelete).not.toHaveBeenCalled();
     expect(repo.delete).not.toHaveBeenCalled();
 
-    expect(events.publish).toHaveBeenCalledWith(
-      ACTIVITY_DELETED,
-      {
-        activityId: "a1",
-        occurredAt: fixed.toISOString(),
-        hard: true,
-      },
-    );
+    expect(events.publish).toHaveBeenCalledWith(ACTIVITY_DELETED, {
+      activityId: "a1",
+      occurredAt: fixed.toISOString(),
+      hard: true,
+    });
 
     vi.useRealTimers();
   });
@@ -134,7 +131,9 @@ describe("DeleteActivityUseCase", () => {
     const err = new Error("cannot hard delete");
     repo.hardDelete.mockRejectedValueOnce(err);
 
-    await expect(uc.execute({ activityId: "a4", hard: true })).rejects.toBe(err);
+    await expect(uc.execute({ activityId: "a4", hard: true })).rejects.toBe(
+      err,
+    );
     expect(events.publish).not.toHaveBeenCalled();
   });
 

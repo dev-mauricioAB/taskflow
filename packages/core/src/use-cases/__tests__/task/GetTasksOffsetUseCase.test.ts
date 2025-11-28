@@ -54,7 +54,7 @@ describe("GetTasksOffsetUseCase", () => {
       offset: 10,
       sortDir: "asc",
       sortBy: "title" as any,
-      includeDeleted: false
+      includeDeleted: false,
     };
 
     const page = {

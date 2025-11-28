@@ -89,7 +89,9 @@ describe("UpdateUserUseCase", () => {
 
     const result = await uc.execute({ userId: "u1", patch: inputPatch });
 
-    expect(repo.update).toHaveBeenCalledWith("u1", { email: "alice@example.com" });
+    expect(repo.update).toHaveBeenCalledWith("u1", {
+      email: "alice@example.com",
+    });
 
     // changed contains only intended keys that are present in repo's projection
     expect(result).toEqual({
@@ -133,7 +135,10 @@ describe("UpdateUserUseCase", () => {
     });
 
     const payload = events.publish.mock.calls[0]?.[1] as UserUpdatedPayload;
-    expect(payload.changed).toEqual({ name: "Alice", email: "alice@example.com" });
+    expect(payload.changed).toEqual({
+      name: "Alice",
+      email: "alice@example.com",
+    });
   });
 
   it("throws NOT_FOUND and does not publish when repository returns null (user missing)", async () => {
@@ -205,7 +210,10 @@ describe("UpdateUserUseCase", () => {
   it("returns empty changed when repo projection excludes intended keys (edge case)", async () => {
     const patch = { name: "Dan" };
     // Suppose repo returns only id/updatedAt (projection mismatch)
-    const updated = { id: "u4", updatedAt: new Date() } as unknown as TUpdateUserDto;
+    const updated = {
+      id: "u4",
+      updatedAt: new Date(),
+    } as unknown as TUpdateUserDto;
 
     repo.update.mockResolvedValueOnce(updated);
 
