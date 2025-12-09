@@ -59,6 +59,7 @@ RUN addgroup --system nodegrp && adduser --system --ingroup nodegrp nodeusr
 # Copy backend compiled output
 COPY --from=build /repo/apps/backend/package.json ./apps/backend/package.json
 COPY --from=build /repo/apps/backend/dist ./apps/backend/dist
+COPY apps/backend/keycloak.json ./apps/backend/dist/keycloak.json
 
 # Copy shared package outputs used at runtime
 COPY --from=build /repo/packages/core/package.json ./packages/core/package.json

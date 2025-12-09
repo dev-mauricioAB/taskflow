@@ -1,6 +1,5 @@
 import express from "express";
-import { connectDb } from "./config/database.config";
-import { serverConfig } from "./config/server.config";
+import { connectDb, serverConfig } from "./config";
 import { app } from "./app";
 
 app.use(express.json());

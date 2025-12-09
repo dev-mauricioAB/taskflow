@@ -6,13 +6,13 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-     "test": "vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
+    "@prisma/client": "^6.17.1",
     "@repo/core": "*",
     "@repo/infra": "*",
     "@repo/shared": "*",
-    "@prisma/client": "^6.17.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
@@ -23,6 +23,7 @@
     "@repo/typescript-config": "*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
     "@vitest/coverage-istanbul": "^3.2.4",
     "prisma": "^6.17.1",
     "ts-node-dev": "^2.0.0",

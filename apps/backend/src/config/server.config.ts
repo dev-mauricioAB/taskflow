@@ -1,4 +1,4 @@
-import { env } from "./env";
+import { env } from "./env.config";
 
 export const serverConfig = {
   port: Number(env.PORT) || 8080,
