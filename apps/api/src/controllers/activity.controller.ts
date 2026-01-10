@@ -1,4 +1,3 @@
-// apps/backend/src/controllers/activity.controller.ts
 import { Request, Response, NextFunction } from "express";
 import {
   CreateActivityUseCase,

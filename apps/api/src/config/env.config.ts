@@ -24,7 +24,7 @@ const envSchema = z.object({
   KEYCLOAK_REALM_PUBLIC_KEY: z.string().optional(),
   // secrets
   KEYCLOAK_CLIENT_SECRET: z.string().optional(),
-  BACKEND_CLIENT_SECRET: z.string().optional(),
+  API_CLIENT_SECRET: z.string().optional(),
 });
 
 const _env = envSchema.safeParse(process.env);

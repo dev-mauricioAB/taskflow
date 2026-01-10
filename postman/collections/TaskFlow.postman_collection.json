@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "ba5a1855-2771-4a9c-8842-7138b8a706c5",
+    "_postman_id": "a73d4941-32c3-4052-abbc-bb94f80168d0",
     "name": "TaskFlow",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -10,7 +10,7 @@
       "item": [
         {
           "name": "Create",
-          "id": "8ae465d7-59a8-40dd-8f8c-caf2cb048310",
+          "id": "4a9138c9-9123-4d70-b16f-caf4384cb7b0",
           "request": {
             "method": "POST",
             "header": [],
@@ -39,7 +39,7 @@
         },
         {
           "name": "List All",
-          "id": "55c16615-2dce-42de-9138-c131896393fc",
+          "id": "974d39ba-67e6-498b-8296-3c1e617d2c46",
           "request": {
             "auth": {
               "type": "bearer",
@@ -85,7 +85,7 @@
         },
         {
           "name": "List All (Cursor Mode)",
-          "id": "13f40c56-6728-416f-8799-e7be0dfa5b43",
+          "id": "732e402e-cd0f-468b-9543-e1f07556d6e9",
           "request": {
             "method": "GET",
             "header": [],
@@ -116,7 +116,7 @@
         },
         {
           "name": "Get by ID",
-          "id": "247fd6dd-7d71-43c1-b621-caf435bf313b",
+          "id": "6df23e74-5f84-4faf-8e21-8bf9e24487b3",
           "request": {
             "method": "GET",
             "header": [],
@@ -137,7 +137,7 @@
         },
         {
           "name": "Delete",
-          "id": "8575714d-8bc9-4e5c-9ed7-5274b76fe14a",
+          "id": "4d367a73-4cf2-4ac0-a2f9-3fb7989c2a30",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -158,7 +158,7 @@
         },
         {
           "name": "Update",
-          "id": "c7ecaccb-e8af-4c4c-830c-370d175f95eb",
+          "id": "c7e4ecec-7512-4899-8f4b-9018dc53972c",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -188,7 +188,7 @@
         },
         {
           "name": "Reactive User",
-          "id": "8109df72-2e51-492c-b35f-3dd0d79cdfa2",
+          "id": "05cd9db5-f2c9-45ad-8934-550230e84121",
           "request": {
             "method": "POST",
             "header": [],
@@ -218,12 +218,12 @@
           "response": []
         },
         {
-          "name": "BACKEND_LOGIN",
+          "name": "API_LOGIN",
           "event": [
             {
               "listen": "test",
               "script": {
-                "id": "fd95f01c-43f9-4bf2-803d-2d4c9b3468e7",
+                "id": "8f388ff0-4b9f-4db2-90b2-69da8b6d11fb",
                 "exec": [
                   "pm.test(\"Save access_token\", () => {\r",
                   "  pm.response.to.have.status(200);\r",
@@ -235,9 +235,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "1e02f599-a129-41db-a0db-87a9ee321adc",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "caae3802-1288-4561-abfc-325320bde352",
+          "id": "120980f0-612d-4c2c-9610-b469635e7172",
           "request": {
             "method": "POST",
             "header": [],
@@ -251,7 +263,7 @@
                 },
                 {
                   "key": "client_secret",
-                  "value": "fM7dd8maGT0f6IiiOmTAzlMgcOEXiZPE",
+                  "value": "vrFm8afBAZiTbuKCG58Ost080jzLGGwH",
                   "type": "text"
                 },
                 {
@@ -266,7 +278,7 @@
                 },
                 {
                   "key": "password",
-                  "value": "nirvana123",
+                  "value": "Nirvana123.",
                   "type": "text"
                 }
               ]
@@ -291,7 +303,7 @@
         },
         {
           "name": "UI_LOGIN",
-          "id": "ce8c3adb-1d78-4a38-85c1-b93bab909289",
+          "id": "ac50d6e3-99aa-46d0-b18c-db2e7630d4b4",
           "request": {
             "method": "POST",
             "header": [],
@@ -305,7 +317,7 @@
                 },
                 {
                   "key": "client_secret",
-                  "value": "fM7dd8maGT0f6IiiOmTAzlMgcOEXiZPE",
+                  "value": "vrFm8afBAZiTbuKCG58Ost080jzLGGwH",
                   "type": "text"
                 },
                 {
@@ -315,12 +327,12 @@
                 },
                 {
                   "key": "username",
-                  "value": "taskflow_adm@test.com",
+                  "value": "taskflow-user@test.com",
                   "type": "text"
                 },
                 {
                   "key": "password",
-                  "value": "nirvana123",
+                  "value": "Nirvana123.",
                   "type": "text"
                 }
               ]
@@ -342,14 +354,14 @@
           "response": []
         }
       ],
-      "id": "c05f563a-6012-4e6a-9e13-fcd9fe9cd015"
+      "id": "b0273b00-1cce-4a1b-ae02-29ea46bee782"
     },
     {
       "name": "Project",
       "item": [
         {
           "name": "Find all",
-          "id": "b07af72c-aa9c-4e6b-8a85-77bc505af477",
+          "id": "4ff75748-c03f-41ae-a500-77cff411fe22",
           "request": {
             "method": "GET",
             "header": [],
@@ -398,7 +410,7 @@
         },
         {
           "name": "Create",
-          "id": "57a6b4bf-bff4-4bd5-bd5d-e2f31914ee47",
+          "id": "b361c882-f90b-44b0-a5ff-d6669bdcefa6",
           "request": {
             "method": "POST",
             "header": [],
@@ -427,7 +439,7 @@
         },
         {
           "name": "Find by ID",
-          "id": "8d4e693c-eeba-427c-ba50-a4ef6f1c1eb8",
+          "id": "baaaca72-68a5-4f66-8308-e2128e9ea623",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -455,7 +467,7 @@
         },
         {
           "name": "Update",
-          "id": "e46c3804-d565-4b58-bfe2-7714b08d26c0",
+          "id": "be859cc7-0a28-4fce-a5d5-108b13b73059",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -485,7 +497,7 @@
         },
         {
           "name": "Delete",
-          "id": "8c6ab1ab-21ee-41d0-9678-1fac87bd5803",
+          "id": "6a27ba02-b435-4a0f-bc92-4b9c9a9aed08",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -505,14 +517,14 @@
           "response": []
         }
       ],
-      "id": "a046c7d1-7369-401c-ab22-d4054e00a2a5"
+      "id": "3a133199-725b-4ebb-b70e-3e214250e12d"
     },
     {
       "name": "Task",
       "item": [
         {
           "name": "Find all",
-          "id": "8e5b12a3-02e4-45ad-93b2-beaeae4ff4e4",
+          "id": "78426261-22b5-4419-8c18-200f51029cc5",
           "request": {
             "method": "GET",
             "header": [],
@@ -532,7 +544,7 @@
         },
         {
           "name": "Create",
-          "id": "efc885a5-d9ac-4b2b-8a69-3d5b673ec546",
+          "id": "1b4a444b-5f93-409b-8340-8dfeddf4357c",
           "request": {
             "method": "POST",
             "header": [],
@@ -561,7 +573,7 @@
         },
         {
           "name": "Find by ID",
-          "id": "5ea15619-d42f-4077-b6c7-8a084285e3cf",
+          "id": "ed0e0c7e-caf0-46b6-9659-13b64e0d4d46",
           "request": {
             "method": "GET",
             "header": [],
@@ -582,7 +594,7 @@
         },
         {
           "name": "Update",
-          "id": "c61d50d0-4e38-4256-9593-678bea46cde1",
+          "id": "b09bc01a-281d-4bdf-b588-4c7259614c41",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -612,7 +624,7 @@
         },
         {
           "name": "Delete",
-          "id": "c83f1295-eb95-4ed1-bfeb-aa3ca10aeca2",
+          "id": "0d20e5cd-208c-4cce-a218-20f4c5ec910a",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -632,14 +644,14 @@
           "response": []
         }
       ],
-      "id": "66ff1419-b4cc-4c22-a098-b397359cb157"
+      "id": "2ce89479-d58c-4dc2-8da1-0a17eed4070c"
     },
     {
       "name": "Activity",
       "item": [
         {
           "name": "Find Activity by Task ID",
-          "id": "81e63e17-85cb-4e14-b58e-be103e798868",
+          "id": "a7e81e46-cdd6-40d0-981e-40f1671643a0",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -668,7 +680,7 @@
         },
         {
           "name": "Add activity",
-          "id": "89e074a2-59e3-4699-939a-dac344d2b42c",
+          "id": "f41abb74-2e7a-42fa-9281-78c9af856cc1",
           "request": {
             "method": "POST",
             "header": [],
@@ -697,7 +709,7 @@
         },
         {
           "name": "Update",
-          "id": "d5db97c6-3f61-4810-a3b6-e50542962b46",
+          "id": "343410f8-3f6f-44cf-834a-bdddb8145f09",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -727,7 +739,7 @@
         },
         {
           "name": "Delete",
-          "id": "493ff31a-c3fd-4cf2-bf5d-05bdb0e9abd4",
+          "id": "17774102-eebe-4412-96c7-4d1bc05772e3",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -747,11 +759,11 @@
           "response": []
         }
       ],
-      "id": "f7c6bcac-11c4-4d57-affa-5ad4eb1d126f"
+      "id": "ae2c4748-3247-4187-9b14-b2bf13f02cc8"
     },
     {
       "name": "ADM_ONLY",
-      "id": "3c9082d5-710a-4e84-8a15-505bfe41cc67",
+      "id": "8656b5eb-239c-4454-a441-81c187eb5f3f",
       "request": {
         "auth": {
           "type": "bearer",
@@ -778,6 +790,14 @@
         }
       },
       "response": []
+    }
+  ],
+  "variable": [
+    {
+      "id": "e081e559-9c92-41d4-b755-157f285fa654",
+      "key": "access_token",
+      "value": "",
+      "type": "default"
     }
   ]
 }

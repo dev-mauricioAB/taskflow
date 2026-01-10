@@ -16,7 +16,7 @@ The goal is to simulate a real-world SaaS ecosystem, including authentication, t
 - **TailwindCSS + ShadCN/UI** for styling
 - **SCI Charts** for analytics dashboards
 
-### Backend
+### API
 
 - **Node.js + Express / NestJS-style Clean Architecture**
 - **Prisma ORM** with **MySQL**
@@ -27,7 +27,7 @@ The goal is to simulate a real-world SaaS ecosystem, including authentication, t
 ### DevOps / Monorepo
 
 - **Turborepo** for task and dependency orchestration
-- **Docker Compose** for running backend, frontend, and database
+- **Docker Compose** for running api, frontend, and database
 - **ESLint + Prettier** for linting and formatting
 - **Husky + Lint-Staged** for git hooks
 
@@ -40,7 +40,7 @@ This project follows **Clean Architecture** principles:
 ```
 /apps
   /web              → Next.js frontend
-  /api              → Node.js backend API
+  /api              → Node.js API
 /packages
   /core             → Domain entities, use-cases, interfaces
   /ui               → Shared UI components

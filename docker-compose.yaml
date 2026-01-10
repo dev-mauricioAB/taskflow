@@ -52,10 +52,10 @@ services:
       - --db-username=keycloak
       - --db-password=password
 
-  backend:
+  api:
     build:
       context: .
-      dockerfile: apps/backend/Dockerfile
+      dockerfile: apps/api/Dockerfile
       target: runner
     volumes:
       - ./apps/api:/usr/src/app/apps/api
@@ -81,7 +81,7 @@ services:
       NODE_ENV: development
       NEXT_PUBLIC_API_URL: http://localhost:8080
     depends_on:
-      - backend
+      - api
 
 volumes:
   db-data:

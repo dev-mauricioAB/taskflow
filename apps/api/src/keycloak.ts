@@ -1,4 +1,3 @@
-// apps/backend/src/keycloak.ts
 import session from "express-session";
 import KeycloakConnect from "keycloak-connect";
 import type { RequestHandler } from "express";
@@ -7,7 +6,7 @@ import { env, makeKeycloakConfig } from "./config";
 const memoryStore = new session.MemoryStore();
 
 export const sessionMiddleware: RequestHandler = session({
-  secret: env.BACKEND_CLIENT_SECRET || '',
+  secret: env.API_CLIENT_SECRET || '',
   resave: false,
   saveUninitialized: true,
   store: memoryStore,

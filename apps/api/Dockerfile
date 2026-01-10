@@ -7,9 +7,9 @@ ENV NODE_ENV=production
 # Turbo for prune/build orchestration
 RUN npm i -g turbo
 
-# Copy the full repo and prune to just what's needed for backend
+# Copy the full repo and prune to just what's needed for api
 COPY . .
-RUN turbo prune --scope=backend --docker
+RUN turbo prune --scope=api --docker
 
 # ---- Dependencies ----
 FROM node:20-bookworm-slim AS deps
@@ -39,9 +39,9 @@ ENV NODE_ENV=production
 WORKDIR /repo/packages/infra
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
-# Build backend and its workspace deps
+# Build api and its workspace deps
 WORKDIR /repo
-RUN yarn run turbo run build --filter=backend...
+RUN yarn run turbo run build --filter=api...
 
 # ---- Runtime ----
 FROM node:20-bookworm-slim AS runner
@@ -56,10 +56,10 @@ RUN apt-get update \
 # Create non-root user
 RUN addgroup --system nodegrp && adduser --system --ingroup nodegrp nodeusr
 
-# Copy backend compiled output
-COPY --from=build /repo/apps/backend/package.json ./apps/backend/package.json
-COPY --from=build /repo/apps/backend/dist ./apps/backend/dist
-COPY apps/backend/keycloak.json ./apps/backend/dist/keycloak.json
+# Copy api compiled output
+COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
+COPY --from=build /repo/apps/api/dist ./apps/api/dist
+COPY apps/api/keycloak.json ./apps/api/dist/keycloak.json
 
 # Copy shared package outputs used at runtime
 COPY --from=build /repo/packages/core/package.json ./packages/core/package.json
@@ -73,8 +73,8 @@ COPY --from=build /repo/packages/infra/prisma ./packages/infra/prisma
 
 # Copy node_modules including generated Prisma client and engines
 COPY --from=build /repo/node_modules ./node_modules
-COPY --from=build /repo/apps/backend/node_modules ./apps/backend/node_modules
+COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
 
 USER nodeusr
 EXPOSE 8080
-CMD ["node", "apps/backend/dist/server.js"]
+CMD ["node", "apps/api/dist/server.js"]

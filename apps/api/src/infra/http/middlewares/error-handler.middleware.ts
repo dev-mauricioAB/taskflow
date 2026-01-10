@@ -1,4 +1,3 @@
-// src/interfaces/http/middlewares/error-handler.ts
 import { NextFunction, Request, Response } from "express";
 import { DomainError } from "@repo/infra";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";

@@ -1,4 +1,3 @@
-// apps/backend/src/controllers/__tests__/activity.controller.spec.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockReq, mockRes } from "./helpers/express";
 import { ActivityController } from "../activity.controller";

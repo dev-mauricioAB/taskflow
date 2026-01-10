@@ -10,18 +10,18 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "Backend: dev",
+      "name": "API: dev",
       "type": "node-terminal",
       "request": "launch",
       "command": "pnpm dev",             // runs your ts-node/nodemon/vite-node, etc.
-      "cwd": "${workspaceFolder}/apps/backend",
+      "cwd": "${workspaceFolder}/apps/api",
       "skipFiles": ["<node_internals>/**"]
     }
   ],
   "compounds": [
     {
-      "name": "Web + Backend",
-      "configurations": ["Web: dev", "Backend: dev"]
+      "name": "Web + API",
+      "configurations": ["Web: dev", "API: dev"]
     }
   ]
 }

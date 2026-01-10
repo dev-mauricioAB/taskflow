@@ -1,12 +1,11 @@
-// backend/src/infra/http/middlewares/validate.ts
 import { NextFunction, Request, Response } from "express";
-import { z, ZodError, ZodTypeAny } from "zod";
+import { z, ZodError, ZodType } from "zod";
 import { DomainError } from "@repo/infra";
 
 type Schemas = {
-  body?: ZodTypeAny;
-  query?: ZodTypeAny;
-  params?: ZodTypeAny;
+  body?: ZodType;
+  query?: ZodType;
+  params?: ZodType;
 };
 
 export function validate(schemas: Schemas) {

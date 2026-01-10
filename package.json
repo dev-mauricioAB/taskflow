@@ -11,7 +11,7 @@
     "test:projects": "vitest run",
     "test:projects:watch": "vitest --watch",
     "view-report": "turbo run view-report",
-    "run:backend": "turbo run dev --filter=backend",
+    "run:api": "turbo run dev --filter=api",
     "run:frontend": "turbo run dev --filter=frontend",
     "bd:deps": "turbo run build --filter=@repo/infra... --filter=@repo/shared... --filter=@repo/core..."
   },
