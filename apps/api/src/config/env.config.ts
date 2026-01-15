@@ -10,7 +10,7 @@ const envSchema = z.object({
 
   // Keycloak
   KEYCLOAK_REALM: z.string(),
-  KEYCLOAK_AUTH_SERVER_URL: z.string().url(),
+  KEYCLOAK_AUTH_SERVER_URL: z.url(),
   KEYCLOAK_SSL_REQUIRED: z.enum(["none", "external", "all"]).default("none"),
   KEYCLOAK_RESOURCE: z.string(),                // client id
   KEYCLOAK_BEARER_ONLY: z
@@ -24,7 +24,7 @@ const envSchema = z.object({
   KEYCLOAK_REALM_PUBLIC_KEY: z.string().optional(),
   // secrets
   KEYCLOAK_CLIENT_SECRET: z.string().optional(),
-  API_CLIENT_SECRET: z.string().optional(),
+  SESSION_SECRET: z.string().min(32),
 });
 
 const _env = envSchema.safeParse(process.env);

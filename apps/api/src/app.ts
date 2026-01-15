@@ -1,4 +1,4 @@
-import express, { Application } from "express";
+import express from "express";
 import cors from "cors";
 
 import { taskRouter } from "./routes/task.routes";
@@ -20,15 +20,15 @@ import {
   protectRole,
 } from "./keycloak";
 
-export const app: Application = express();
-
-app.use(cors());
-app.use(express.json());
-app.use(logger);
+export const app = express();
 
 // Keycloak session + middleware
 app.use(sessionMiddleware);
 app.use(keycloakMiddleware);
+
+app.use(cors());
+app.use(express.json());
+app.use(logger);
 
 // Protected routes
 app.use("/tasks", protect(), taskRouter);

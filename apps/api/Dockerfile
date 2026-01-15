@@ -29,11 +29,15 @@ RUN yarn install --immutable --immutable-cache
 FROM node:20-bookworm-slim AS build
 WORKDIR /repo
 
+# Receive build-time DATABASE_URL
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+
+ENV NODE_ENV=production
+
 # Bring node_modules from deps and pruned source from base
 COPY --from=deps /repo .
 COPY --from=base /repo/out/full/ .
-
-ENV NODE_ENV=production
 
 # Generate Prisma Client inside the infra workspace (shared instance)
 WORKDIR /repo/packages/infra
@@ -48,6 +52,10 @@ FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Accept DATABASE_URL at build-time (optional) and keep as env
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+
 # Install OpenSSL 3 runtime libraries
 RUN apt-get update \
   && apt-get install -y --no-install-recommends libssl3 ca-certificates \
@@ -59,7 +67,6 @@ RUN addgroup --system nodegrp && adduser --system --ingroup nodegrp nodeusr
 # Copy api compiled output
 COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
-COPY apps/api/keycloak.json ./apps/api/dist/keycloak.json
 
 # Copy shared package outputs used at runtime
 COPY --from=build /repo/packages/core/package.json ./packages/core/package.json
