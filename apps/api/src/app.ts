@@ -1,10 +1,5 @@
 import express from "express";
 import cors from "cors";
-
-import { taskRouter } from "./routes/task.routes";
-import { userRouter } from "./routes/user.routes";
-import { projectRouter } from "./routes/project.routes";
-import { activityRoutes } from "./routes/activity.routes";
 import { logger } from "./infra/http/middlewares/logging.middleware";
 import { errorHandler } from "./infra/http/middlewares/error-handler.middleware";
 import {
@@ -13,12 +8,8 @@ import {
   registerUserLoggingSubscribers,
   registerActivityLoggingSubscribers,
 } from "@repo/core";
-import {
-  sessionMiddleware,
-  keycloakMiddleware,
-  protect,
-  protectRole,
-} from "./keycloak";
+import { sessionMiddleware, keycloakMiddleware, protectRole } from "./keycloak";
+import { apiRouter } from "./routes/api.routes";
 
 export const app = express();
 
@@ -31,10 +22,7 @@ app.use(express.json());
 app.use(logger);
 
 // Protected routes
-app.use("/tasks", protect(), taskRouter);
-app.use("/users", protect(), userRouter);
-app.use("/projects", protect(), projectRouter);
-app.use("/activity", protect(), activityRoutes);
+app.use("/api", apiRouter);
 
 // Example role-protected route
 app.get("/admin-only", protectRole("taskflow-api:full-access"), (_req, res) => {

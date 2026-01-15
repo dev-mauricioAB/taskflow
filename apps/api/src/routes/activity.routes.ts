@@ -18,11 +18,11 @@ import {
   withQuery,
 } from "../utils/typed-route";
 
-export const activityRoutes: Router = Router();
+export const activityRouter: Router = Router();
 const controller = new ActivityController();
 
 // POST /activities
-activityRoutes.post(
+activityRouter.post(
   "/",
   validate({ body: CreateActivityDto }),
   withBody<TCreateActivityDto>((req, res, next) =>
@@ -31,7 +31,7 @@ activityRoutes.post(
 );
 
 // GET /activities/task/:id — by taskId as route param
-activityRoutes.get(
+activityRouter.get(
   "/task/:id",
   validate({ params: ActivityParamsDto }),
   withParams<TActivityParamsDto>((req, res, next) =>
@@ -40,7 +40,7 @@ activityRoutes.get(
 );
 
 // Optional: GET /activities — filter by query (taskId/actorId/type)
-activityRoutes.get(
+activityRouter.get(
   "/",
   validate({ query: ActivityQueryDto }),
   withQuery<TActivityQueryDto>((req, res, next) =>
@@ -49,7 +49,7 @@ activityRoutes.get(
 );
 
 // PATCH /activities/:id
-activityRoutes.patch(
+activityRouter.patch(
   "/:id",
   validate({ params: ActivityParamsDto, body: UpdateActivityDto }),
   withParamsAndBody<TActivityParamsDto, TUpdateActivityDto>((req, res, next) =>
@@ -58,7 +58,7 @@ activityRoutes.patch(
 );
 
 // DELETE /activities/:id
-activityRoutes.delete(
+activityRouter.delete(
   "/:id",
   validate({ params: ActivityParamsDto }),
   withParams<TActivityParamsDto>((req, res, next) =>

@@ -6,13 +6,16 @@ import { env, makeKeycloakConfig } from "./config";
 const memoryStore = new session.MemoryStore();
 
 export const sessionMiddleware: RequestHandler = session({
-  secret: env.SESSION_SECRET || '',
+  secret: env.SESSION_SECRET || "",
   resave: false,
   saveUninitialized: true,
   store: memoryStore,
 });
 
-export const keycloak = new KeycloakConnect({ store: memoryStore }, makeKeycloakConfig());
+export const keycloak = new KeycloakConnect(
+  { store: memoryStore },
+  makeKeycloakConfig(),
+);
 
 export const keycloakMiddleware = keycloak.middleware({
   logout: "/logout",
