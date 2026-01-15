@@ -37,7 +37,7 @@ The goal is to simulate a real-world SaaS ecosystem, including authentication, t
 
 This project follows **Clean Architecture** principles:
 
-``` bash
+```bash
 /apps
   /web              → Next.js frontend
   /api              → Node.js API

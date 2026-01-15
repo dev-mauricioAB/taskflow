@@ -1,14 +1,40 @@
-import UsersPage from "./pages/users";
-import { ReactQueryProvider } from "../providers/providers";
+// pages/index.tsx
+import type { NextPage } from "next";
+import Link from "next/link";
 
-export default function Home() {
+const HomePage: NextPage = () => {
   return (
-    <div>
-      <h1>Hello HOME</h1>
+    <main className="min-h-screen flex flex-col items-center justify-center gap-6">
+      <h1 className="text-3xl font-bold">TaskFlow</h1>
 
-      <ReactQueryProvider>
-        <UsersPage />
-      </ReactQueryProvider>
-    </div>
+      <p className="text-gray-600">
+        Welcome! Choose where you want to go.
+      </p>
+
+      <nav className="flex gap-4">
+        <Link
+          href="/admin"
+          className="rounded bg-slate-800 px-4 py-2 text-white"
+        >
+          Go to Admin
+        </Link>
+
+        <Link
+          href="/no-permission"
+          className="rounded bg-red-600 px-4 py-2 text-white"
+        >
+          No Permission Demo
+        </Link>
+
+        <Link
+          href="/test"
+          className="rounded bg-red-600 px-4 py-2 text-white"
+        >
+          Test
+        </Link>
+      </nav>
+    </main>
   );
-}
+};
+
+export default HomePage;

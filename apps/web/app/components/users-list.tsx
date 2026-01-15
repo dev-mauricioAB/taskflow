@@ -1,5 +1,6 @@
 "use client";
-import { useUsers } from "../hooks/useUsers";
+
+import { useUsers } from "@/hooks/useUsers";
 
 export default function UsersList() {
   const { data, isLoading, isError, error } = useUsers();
