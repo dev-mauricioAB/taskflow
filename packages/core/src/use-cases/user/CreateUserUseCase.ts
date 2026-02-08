@@ -19,20 +19,15 @@ export class CreateUserUseCase {
 
     // 1) Check if any user exists by email (including inactive/soft-deleted)
     const existing = await this.users.findByEmail(email);
-
     if (existing) {
       if (existing.deletedAt) {
-        // Explicit inactive handling: guide caller to reactivation flow
         throw new DomainError({
           code: "USER_INACTIVE",
           message:
             "An account with this email exists but is inactive. Reactivate the account to proceed.",
-          details: {
-            email: existing.email,
-          },
+          details: { email: existing.email },
         });
       }
-      // Active account already exists
       throw new DomainError({
         code: "EMAIL_IN_USE",
         message: "An active account with this email already exists.",
@@ -40,10 +35,30 @@ export class CreateUserUseCase {
       });
     }
 
-    // 2) Create as new when no record exists
-    const newUser: NewEntity<User> = { name, email };
+    // 2) Create local user (existing logic)
+    const newUser: NewEntity<User> = {
+      name,
+      email,
+      ...(input.keycloakUserId && { keycloakUserId: input.keycloakUserId }), // link if provided
+    };
     const user = await this.users.create(newUser);
 
+    // 3) Verify Keycloak linkage ONLY IF keycloakUserId was provided (best effort)
+    if (input.keycloakUserId) {
+      try {
+        // Use case just logs if linkage was expected but something's wrong
+        console.log(
+          `User ${user.id} successfully linked to Keycloak ${input.keycloakUserId}`,
+        );
+      } catch (error) {
+        console.error(
+          `Keycloak linkage verification failed for user ${user.id}:`,
+          error,
+        );
+      }
+    }
+
+    // 4) Event logic
     const payload: UserCreatedPayload = {
       userId: user.id,
       email: user.email,

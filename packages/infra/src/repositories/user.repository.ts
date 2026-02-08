@@ -153,23 +153,29 @@ export class UserRepository implements IUserRepository {
     await prisma.user.delete({ where: { id } });
   }
 
-  async create(user: TCreateUserDto): Promise<User> {
-    return prisma.user.create({
-      data: {
-        name: user.name,
-        email: user.email,
-      },
-    });
+  async create(data: TCreateUserDto): Promise<User> {
+    return prisma.user.create({ data });
   }
 
   async update(userId: string, patch: TUpdateUserDto): Promise<TUpdateUserDto> {
     const updated = await prisma.user.update({
       where: { id: userId },
       data: patch,
-      select: { id: true, name: true, email: true, updatedAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        updatedAt: true,
+        keycloakUserId: true,
+      },
     });
 
-    return updated;
+    // Map keycloakUserId null to undefined for type compatibility
+    return {
+      name: updated.name,
+      email: updated.email,
+      keycloakUserId: updated.keycloakUserId ?? undefined,
+    };
   }
 
   async softDelete(userId: string, when: Date): Promise<boolean> {

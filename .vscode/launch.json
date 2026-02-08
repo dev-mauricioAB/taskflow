@@ -13,7 +13,7 @@
       "name": "API: dev",
       "type": "node-terminal",
       "request": "launch",
-      "command": "pnpm dev",             // runs your ts-node/nodemon/vite-node, etc.
+      "command": "yarn dev",             // runs your ts-node/nodemon/vite-node, etc.
       "cwd": "${workspaceFolder}/apps/api",
       "skipFiles": ["<node_internals>/**"]
     }

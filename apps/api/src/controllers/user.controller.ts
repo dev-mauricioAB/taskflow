@@ -15,7 +15,9 @@ import {
   TCreateUserDto,
   TUserCursorPagination,
   TUserOffsetPagination,
+  TCreateKeycloakUserDto,
 } from "@repo/shared";
+import { authKeycloakAdmin, kcAdmin } from "../config/keycloak-admin";
 
 export class UserController {
   private userRepo = new UserRepository();
@@ -28,14 +30,16 @@ export class UserController {
   private deleteUserUC = new DeleteUserUseCase(
     this.userRepo,
     eventBusPublisher,
+    kcAdmin,
   );
   private updateUserUC = new UpdateUserUseCase(
     this.userRepo,
     eventBusPublisher,
+    kcAdmin,
   );
 
   // Queries (no events)
-  private reactivateUserUC = new ReactivateUserUseCase(this.userRepo);
+  private reactivateUserUC = new ReactivateUserUseCase(this.userRepo, kcAdmin);
   private getUsersOffsetUC = new GetUsersOffsetUseCase(this.userRepo);
   private getUsersCursorUC = new GetUsersCursorUseCase(this.userRepo);
   private getUserByIdUC = new GetUserByIdUseCase(this.userRepo);
@@ -106,8 +110,10 @@ export class UserController {
   ) {
     try {
       const { id } = req.params;
-      // Decide soft vs hard delete policy; example uses hard: true as earlier
+
+      await authKeycloakAdmin();
       await this.deleteUserUC.execute({ userId: id, hard: true });
+
       return res.status(204).send();
     } catch (err) {
       return next(err);
@@ -124,6 +130,7 @@ export class UserController {
       const { id } = req.params;
       const { email, name } = req.body;
 
+      await authKeycloakAdmin();
       const result = await this.updateUserUC.execute({
         userId: id,
         patch: { email, name },
@@ -173,11 +180,80 @@ export class UserController {
         );
       }
 
+      await authKeycloakAdmin();
       // Note: in a real app, verify email ownership (OTP/magic link) before reactivation.
       const user = await this.reactivateUserUC.execute(email);
 
       return res.status(200).json(user);
     } catch (err) {
+      return next(err);
+    }
+  }
+
+  /**
+   * Full user signup with Keycloak credentials
+   * WHY SEPARATE CREATION IN TWO STEPS? (Keycloak → Local User)
+   *
+   * 1) Keycloak FIRST: Identity Provider owns AUTHORITY over identity/credentials
+   *    - Password hashing, credential policies, brute-force protection
+   *    - Ensures user exists in IAM before app knows about them
+   *
+   * 2) Local User SECOND: App owns business metadata/profile
+   *    - Links via opaque `keycloakUserId` (loose coupling)
+   *    - Domain validation (email uniqueness) happens here
+   *
+   * 3) Benefits:
+   *    - Keycloak can be swapped (Auth0, etc.) with minimal app changes
+   *    - Local DB stays clean (no passwords, no auth logic)
+   *    - Atomic: if Keycloak fails → no local user created
+   *    - Controllers orchestrate, use cases validate domain rules
+   */
+  async createWithKeycloak(
+    req: Request<{}, {}, TCreateKeycloakUserDto>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { name, email, password } = req.body;
+      const trimmedName = name.trim();
+      const trimmedEmail = email.trim().toLowerCase();
+
+      // STEP 1: CREATE IDENTITY in Keycloak (credentials + basic profile)
+      await authKeycloakAdmin();
+
+      const kcUser = await kcAdmin.users.create({
+        username: trimmedEmail,
+        email: trimmedEmail,
+        firstName: trimmedName,
+        enabled: true,
+        credentials: [
+          {
+            type: "password",
+            value: password,
+            temporary: false, // user can login immediately
+          },
+        ],
+      });
+
+      const keycloakUserId = kcUser.id;
+      if (!keycloakUserId) {
+        throw new Error("Keycloak did not return user ID");
+      }
+
+      // STEP 2: CREATE BUSINESS USER in app DB (domain validation + events)
+      // Pass keycloakUserId to link the two identities
+      const appUser = await this.createUserUC.execute({
+        name: trimmedName,
+        email: trimmedEmail,
+        keycloakUserId, // ← Links the two systems
+      });
+
+      // STEP 3: Return fully linked user
+      // Frontend gets appUser with keycloakUserId populated
+      return res.status(201).json(appUser);
+    } catch (err) {
+      // If Keycloak fails → no local user created (atomicity)
+      // If local creation fails → Keycloak user exists (can cleanup later if needed)
       return next(err);
     }
   }

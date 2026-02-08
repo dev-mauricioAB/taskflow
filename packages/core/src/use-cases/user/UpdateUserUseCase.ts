@@ -10,6 +10,7 @@ import {
   USER_UPDATED,
   UserUpdatedPayload,
 } from "@repo/shared";
+import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 type Input = {
   userId: string;
@@ -20,13 +21,14 @@ export class UpdateUserUseCase {
   constructor(
     private readonly users: IUserRepository,
     private readonly events: IEventPublisher,
+    private readonly kcAdmin: KcAdminClient,
   ) {}
 
   async execute({
     userId,
     patch,
   }: Input): Promise<{ changed: Record<string, unknown> }> {
-    // 1) Normalize + validate
+    // 1) Normalize + validate (existing logic unchanged)
     const normalized: Record<string, unknown> = { ...patch };
     if (typeof patch.email !== "undefined") {
       const email = patch.email?.trim();
@@ -59,10 +61,10 @@ export class UpdateUserUseCase {
     }
 
     // 3) Persist (pure persistence concern in repo)
-    const updated: TUpdateUserDto | null = await this.users.update(
+    const updated = (await this.users.update(
       userId,
       normalized,
-    );
+    )) as TUpdateUserDto | null;
 
     if (!updated) {
       throw new DomainError({
@@ -71,7 +73,33 @@ export class UpdateUserUseCase {
       });
     }
 
-    // 4) Compute changed from intended ∩ projection keys
+    // 4) Sync to Keycloak if keycloakUserId was provided
+    if (updated.keycloakUserId) {
+      try {
+        // Build Keycloak update payload from relevant changes
+        const kcUpdate: Record<string, any> = {};
+        if (normalized.name !== undefined) {
+          kcUpdate.firstName = normalized.name;
+        }
+        if (normalized.email !== undefined) {
+          kcUpdate.email = normalized.email;
+        }
+
+        if (Object.keys(kcUpdate).length > 0) {
+          await this.kcAdmin.users.update(
+            {
+              id: updated.keycloakUserId,
+            },
+            kcUpdate,
+          );
+        }
+      } catch (kcError) {
+        console.error(`Keycloak sync failed for user ${userId}:`, kcError);
+        // Best effort: log but don't fail local update
+      }
+    }
+
+    // 5) Compute changed from intended ∩ projection keys (existing)
     const changed: Record<string, unknown> = {};
     for (const key of intended) {
       if (key in updated) {
@@ -79,12 +107,11 @@ export class UpdateUserUseCase {
       }
     }
 
-    // 5) Publish event with rich payload
+    // 6) Publish event with rich payload (existing)
     const payload: UserUpdatedPayload = {
       userId,
       changed,
       updatedAt: new Date().toISOString(),
-      // updatedAt: updated.updatedAt.toISOString(),
     };
     this.events.publish<UserUpdatedPayload>(USER_UPDATED, payload);
 

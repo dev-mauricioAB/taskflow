@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  keycloakUserId?: string | null;
   name: string;
   email: string;
   createdAt: Date;

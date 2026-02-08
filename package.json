@@ -12,7 +12,7 @@
     "test:projects:watch": "vitest --watch",
     "view-report": "turbo run view-report",
     "run:api": "turbo run dev --filter=api",
-    "run:frontend": "turbo run dev --filter=frontend",
+    "run:web": "turbo run dev --filter=web",
     "bd:deps": "turbo run build --filter=@repo/infra... --filter=@repo/shared... --filter=@repo/core..."
   },
   "devDependencies": {

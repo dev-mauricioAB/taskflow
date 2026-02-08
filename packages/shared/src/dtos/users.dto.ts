@@ -2,18 +2,20 @@ import { z } from "zod";
 import { UserSchema, Id } from "../schemas/user.schema";
 
 // Create: client supplies name/email; server sets id/createdAt/updatedAt
+// keycloakUserId optional for IAM-backed creation (admin/internal only)
 export const CreateUserDto = z
   .object({
     name: UserSchema.shape.name,
     email: UserSchema.shape.email,
+    keycloakUserId: Id.optional(), // ← Optional for Keycloak linkage
   })
   .strict();
 
 export const UpdateUserDto = z
   .object({
-    // Allow partial updates; no id in body
     name: UserSchema.shape.name.optional(),
     email: UserSchema.shape.email.optional(),
+    keycloakUserId: Id.optional(), // ← Optional for Keycloak linkage
   })
   .strict();
 
@@ -25,7 +27,6 @@ export const UserParamsDto = z
 
 export const UserQueryDto = z
   .object({
-    // add pagination/sorting when needed
     q: z.string().trim().optional(),
   })
   .strict();

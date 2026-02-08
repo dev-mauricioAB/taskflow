@@ -4,6 +4,7 @@ import { DomainError } from "@repo/infra";
 import type { TUpdateUserDto, UserUpdatedPayload, User } from "@repo/shared";
 import { USER_UPDATED } from "@repo/shared";
 import { UpdateUserUseCase } from "../../user";
+import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 function makeRepo(): Mocked<IUserRepository> {
   return {
@@ -28,13 +29,15 @@ function makeEvents(): Mocked<IEventPublisher> {
 describe("UpdateUserUseCase", () => {
   let repo: Mocked<IUserRepository>;
   let events: Mocked<IEventPublisher>;
+  let kcAdmin: Mocked<KcAdminClient>;
   let uc: UpdateUserUseCase;
 
   beforeEach(() => {
     vi.clearAllMocks();
     repo = makeRepo();
     events = makeEvents();
-    uc = new UpdateUserUseCase(repo, events);
+    kcAdmin = new KcAdminClient() as unknown as Mocked<KcAdminClient>;
+    uc = new UpdateUserUseCase(repo, events, kcAdmin);
   });
 
   it("trims and validates email and name; rejects empty after trim", async () => {

@@ -39,6 +39,34 @@ export function errorHandler(
         .status(404)
         .json({ error: "Record not found", code: err.code });
   }
+
+  if (
+    err instanceof Error &&
+    "responseData" in err &&
+    typeof err.responseData === "object"
+  ) {
+    const data = err.responseData as Record<string, unknown>;
+    if (data.errorMessage === "User exists with same email") {
+      return res.status(409).json({
+        error: "User already exists in authentication service",
+        code: "KEYCLOAK_USER_EXISTS",
+      });
+    }
+    if (err.message.includes("403") || err.message.includes("Forbidden")) {
+      return res.status(503).json({
+        error: "Authentication service unavailable",
+        code: "KEYCLOAK_UNAVAILABLE",
+        details: { action: "user_creation" },
+      });
+    }
+    // Other Keycloak errors
+    return res.status(502).json({
+      error: "Authentication service error",
+      code: "KEYCLOAK_ERROR",
+      details: data.errorMessage || err.message,
+    });
+  }
+
   const message = err instanceof Error ? err.message : "Internal Server Error";
   return res.status(500).json({ error: message });
 }

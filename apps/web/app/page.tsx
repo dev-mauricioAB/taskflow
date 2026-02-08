@@ -7,9 +7,7 @@ const HomePage: NextPage = () => {
     <main className="min-h-screen flex flex-col items-center justify-center gap-6">
       <h1 className="text-3xl font-bold">TaskFlow</h1>
 
-      <p className="text-gray-600">
-        Welcome! Choose where you want to go.
-      </p>
+      <p className="text-gray-600">Welcome! Choose where you want to go.</p>
 
       <nav className="flex gap-4">
         <Link
@@ -26,10 +24,7 @@ const HomePage: NextPage = () => {
           No Permission Demo
         </Link>
 
-        <Link
-          href="/test"
-          className="rounded bg-red-600 px-4 py-2 text-white"
-        >
+        <Link href="/test" className="rounded bg-red-600 px-4 py-2 text-white">
           Test
         </Link>
       </nav>

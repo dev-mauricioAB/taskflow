@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
 import type { IUserRepository, IEventPublisher } from "@repo/infra";
 import { USER_DELETED } from "@repo/shared";
 import { DeleteUserUseCase } from "../../user";
+import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 function makeRepo(): Mocked<IUserRepository> {
   return {
@@ -25,12 +26,14 @@ describe("DeleteUserUseCase", () => {
   let repo: Mocked<IUserRepository>;
   let events: Mocked<IEventPublisher>;
   let uc: DeleteUserUseCase;
+  let kcAdmin: Mocked<KcAdminClient>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     repo = makeRepo();
     events = makeEvents();
-    uc = new DeleteUserUseCase(repo, events);
+    kcAdmin = new KcAdminClient() as unknown as Mocked<KcAdminClient>;
+    uc = new DeleteUserUseCase(repo, events, kcAdmin);
   });
 
   it("soft-deletes by default and publishes USER_DELETED with ISO timestamp", async () => {

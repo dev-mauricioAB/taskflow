@@ -20,12 +20,12 @@ export default withAuth(
       // Require auth for all matched routes
       authorized: ({ token }) => !!token,
     },
-  }
+  },
 );
 
 export const config = {
   matcher: [
-    "/admin/:path*",                                  // admin area (needs admin)
-    "/((?!api/auth|_next|favicon.ico).*)",            // everything else, just needs auth
+    "/admin/:path*", // admin area (needs admin)
+    "/((?!api/auth|_next|favicon.ico).*)", // everything else, just needs auth
   ],
 };

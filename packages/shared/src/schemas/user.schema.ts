@@ -7,6 +7,7 @@ export const ISODate = z.coerce.date();
 // User
 export const UserSchema = z.object({
   id: Id,
+  keycloakUserId: Id.optional(),
   name: z.string().trim().min(1, "Name required"),
   email: z.email("Invalid email"),
   createdAt: ISODate,
