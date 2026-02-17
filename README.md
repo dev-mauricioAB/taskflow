@@ -58,6 +58,22 @@ This project follows **Clean Architecture** principles:
 
 ---
 
+## 📚 Documentation
+
+Detailed documentation for the project structure, architecture, and packages lives in the [`docs/`](docs/README.md) folder:
+
+- [**Architecture**](docs/architecture.md) — Layers, dependency rule, request path
+- [**Data flow**](docs/data-flow.md) — End-to-end flow from HTTP to DB and events
+- [**Monorepo**](docs/monorepo.md) — Workspaces, packages, build order, scripts
+- [**Backend stack**](docs/backend-stack.md) — Routes, controllers, middlewares
+- [**Core / Infra / Shared**](docs/core-package.md) — Use cases, repositories, DTOs, schemas
+- [**Design patterns**](docs/design-patterns.md) — SOLID, Clean Code, repository and use case patterns
+- [**SOLID and Clean Architecture**](docs/solid-and-clean-architecture.md) — How they’re applied in the codebase, with examples
+
+Start with [docs/README.md](docs/README.md) for the full index.
+
+---
+
 ## 🧩 Features
 
 ✅ Authentication (Sign up / Login / Forgot Password)  
