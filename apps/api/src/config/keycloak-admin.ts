@@ -1,7 +1,3 @@
-import { Dotenv } from "dotenv-mono";
-const dotenv = new Dotenv(/* config */);
-dotenv.load();
-
 import KcAdminClient from "@keycloak/keycloak-admin-client";
 import { env } from "./env.config";
 

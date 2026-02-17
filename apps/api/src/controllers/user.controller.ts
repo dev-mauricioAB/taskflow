@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import {
   CreateUserUseCase,
+  CreateUserWithKeycloakUseCase,
   DeleteUserUseCase,
   GetUserByIdUseCase,
   GetUsersCursorUseCase,
@@ -32,6 +33,10 @@ export class UserController {
   private createUserUC = new CreateUserUseCase(
     this.userRepo,
     eventBusPublisher,
+  );
+  private createUserWithKeycloakUC = new CreateUserWithKeycloakUseCase(
+    this.createUserUC,
+    this.identityProvider,
   );
   private deleteUserUC = new DeleteUserUseCase(
     this.userRepo,
@@ -200,22 +205,8 @@ export class UserController {
   }
 
   /**
-   * Full user signup with Keycloak credentials
-   * WHY SEPARATE CREATION IN TWO STEPS? (Keycloak → Local User)
-   *
-   * 1) Keycloak FIRST: Identity Provider owns AUTHORITY over identity/credentials
-   *    - Password hashing, credential policies, brute-force protection
-   *    - Ensures user exists in IAM before app knows about them
-   *
-   * 2) Local User SECOND: App owns business metadata/profile
-   *    - Links via opaque `keycloakUserId` (loose coupling)
-   *    - Domain validation (email uniqueness) happens here
-   *
-   * 3) Benefits:
-   *    - Keycloak can be swapped (Auth0, etc.) with minimal app changes
-   *    - Local DB stays clean (no passwords, no auth logic)
-   *    - Atomic: if Keycloak fails → no local user created
-   *    - Controllers orchestrate, use cases validate domain rules
+   * Signup with identity provider credentials.
+   * Controller only ensures IdP admin auth and delegates to use case.
    */
   async createWithKeycloak(
     req: Request<{}, {}, TCreateKeycloakUserDto>,
@@ -223,46 +214,10 @@ export class UserController {
     next: NextFunction,
   ) {
     try {
-      const { name, email, password } = req.body;
-      const trimmedName = name.trim();
-      const trimmedEmail = email.trim().toLowerCase();
-
-      // STEP 1: CREATE IDENTITY in Keycloak (credentials + basic profile)
       await authKeycloakAdmin();
-
-      const kcUser = await kcAdmin.users.create({
-        username: trimmedEmail,
-        email: trimmedEmail,
-        firstName: trimmedName,
-        enabled: true,
-        credentials: [
-          {
-            type: "password",
-            value: password,
-            temporary: false, // user can login immediately
-          },
-        ],
-      });
-
-      const keycloakUserId = kcUser.id;
-      if (!keycloakUserId) {
-        throw new Error("Keycloak did not return user ID");
-      }
-
-      // STEP 2: CREATE BUSINESS USER in app DB (domain validation + events)
-      // Pass keycloakUserId to link the two identities
-      const appUser = await this.createUserUC.execute({
-        name: trimmedName,
-        email: trimmedEmail,
-        keycloakUserId, // ← Links the two systems
-      });
-
-      // STEP 3: Return fully linked user
-      // Frontend gets appUser with keycloakUserId populated
-      return res.status(201).json(appUser);
+      const user = await this.createUserWithKeycloakUC.execute(req.body);
+      return res.status(201).json(user);
     } catch (err) {
-      // If Keycloak fails → no local user created (atomicity)
-      // If local creation fails → Keycloak user exists (can cleanup later if needed)
       return next(err);
     }
   }

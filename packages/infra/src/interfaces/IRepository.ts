@@ -51,17 +51,17 @@ export interface IRepository<T, ID> {
   /**
    * Marks the user as deleted (soft delete). Returns true if a change occurred.
    */
-  softDelete(userId: string, when: Date): Promise<boolean>;
+  softDelete(id: string, when: Date): Promise<boolean>;
 
   /**
    * Permanently removes the user (hard delete). Returns true if a row was removed.
    */
-  hardDelete(userId: string): Promise<boolean>;
+  hardDelete(id: string): Promise<boolean>;
 
   /**
    * Utility helpers for idempotency.
    */
-  exists(userId: string): Promise<boolean>;
-  isSoftDeleted(userId: string): Promise<boolean>;
-  update(userId: string, patch: NewEntity<Partial<T>>): Promise<Partial<T>>;
+  exists(id: string): Promise<boolean>;
+  isSoftDeleted(id: string): Promise<boolean>;
+  update(id: string, patch: NewEntity<Partial<T>>): Promise<Partial<T>>;
 }
