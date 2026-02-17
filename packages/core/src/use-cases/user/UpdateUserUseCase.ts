@@ -1,6 +1,7 @@
 import {
   DomainError,
   IEventPublisher,
+  IIdentityProviderAdmin,
   IUserRepository,
   NewEntity,
 } from "@repo/infra";
@@ -10,7 +11,6 @@ import {
   USER_UPDATED,
   UserUpdatedPayload,
 } from "@repo/shared";
-import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 type Input = {
   userId: string;
@@ -21,7 +21,7 @@ export class UpdateUserUseCase {
   constructor(
     private readonly users: IUserRepository,
     private readonly events: IEventPublisher,
-    private readonly kcAdmin: KcAdminClient,
+    private readonly identityProvider: IIdentityProviderAdmin,
   ) {}
 
   async execute({
@@ -73,28 +73,29 @@ export class UpdateUserUseCase {
       });
     }
 
-    // 4) Sync to Keycloak if keycloakUserId was provided
+    // 4) Sync to identity provider if keycloakUserId was provided
     if (updated.keycloakUserId) {
       try {
-        // Build Keycloak update payload from relevant changes
-        const kcUpdate: Record<string, any> = {};
+        // Build identity provider update payload from relevant changes
+        const idpUpdates: {
+          firstName?: string;
+          email?: string;
+        } = {};
         if (normalized.name !== undefined) {
-          kcUpdate.firstName = normalized.name;
+          idpUpdates.firstName = normalized.name as string;
         }
         if (normalized.email !== undefined) {
-          kcUpdate.email = normalized.email;
+          idpUpdates.email = normalized.email as string;
         }
 
-        if (Object.keys(kcUpdate).length > 0) {
-          await this.kcAdmin.users.update(
-            {
-              id: updated.keycloakUserId,
-            },
-            kcUpdate,
+        if (Object.keys(idpUpdates).length > 0) {
+          await this.identityProvider.updateUser(
+            updated.keycloakUserId,
+            idpUpdates,
           );
         }
-      } catch (kcError) {
-        console.error(`Keycloak sync failed for user ${userId}:`, kcError);
+      } catch (idpError) {
+        console.error(`Identity provider sync failed for user ${userId}:`, idpError);
         // Best effort: log but don't fail local update
       }
     }

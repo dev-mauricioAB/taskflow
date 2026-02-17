@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
-import type { IUserRepository, IEventPublisher, NewEntity } from "@repo/infra";
+import type {
+  IUserRepository,
+  IEventPublisher,
+  IIdentityProviderAdmin,
+  NewEntity,
+} from "@repo/infra";
 import { DomainError } from "@repo/infra";
 import type { TUpdateUserDto, UserUpdatedPayload, User } from "@repo/shared";
 import { USER_UPDATED } from "@repo/shared";
 import { UpdateUserUseCase } from "../../user";
-import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 function makeRepo(): Mocked<IUserRepository> {
   return {
@@ -26,18 +30,26 @@ function makeEvents(): Mocked<IEventPublisher> {
   } as unknown as Mocked<IEventPublisher>;
 }
 
+function makeIdentityProvider(): Mocked<IIdentityProviderAdmin> {
+  return {
+    disableUser: vi.fn(),
+    enableUser: vi.fn(),
+    updateUser: vi.fn(),
+  } as unknown as Mocked<IIdentityProviderAdmin>;
+}
+
 describe("UpdateUserUseCase", () => {
   let repo: Mocked<IUserRepository>;
   let events: Mocked<IEventPublisher>;
-  let kcAdmin: Mocked<KcAdminClient>;
+  let identityProvider: Mocked<IIdentityProviderAdmin>;
   let uc: UpdateUserUseCase;
 
   beforeEach(() => {
     vi.clearAllMocks();
     repo = makeRepo();
     events = makeEvents();
-    kcAdmin = new KcAdminClient() as unknown as Mocked<KcAdminClient>;
-    uc = new UpdateUserUseCase(repo, events, kcAdmin);
+    identityProvider = makeIdentityProvider();
+    uc = new UpdateUserUseCase(repo, events, identityProvider);
   });
 
   it("trims and validates email and name; rejects empty after trim", async () => {

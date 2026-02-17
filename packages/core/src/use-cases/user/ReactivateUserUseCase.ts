@@ -1,11 +1,14 @@
-import { DomainError, IUserRepository } from "@repo/infra";
+import {
+  DomainError,
+  IIdentityProviderAdmin,
+  IUserRepository,
+} from "@repo/infra";
 import { User } from "@repo/shared";
-import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 export class ReactivateUserUseCase {
   constructor(
     private readonly users: IUserRepository,
-    private readonly kcAdmin: KcAdminClient,
+    private readonly identityProvider: IIdentityProviderAdmin,
   ) {}
 
   async execute(email: string): Promise<User> {
@@ -24,12 +27,9 @@ export class ReactivateUserUseCase {
 
     if (reactivated.keycloakUserId) {
       try {
-        await this.kcAdmin.users.update(
-          { id: reactivated.keycloakUserId },
-          { enabled: true },
-        );
-      } catch (kcError) {
-        console.error(`Keycloak enable failed for user ${user.id}:`, kcError);
+        await this.identityProvider.enableUser(reactivated.keycloakUserId);
+      } catch (idpError) {
+        console.error(`Identity provider enable failed for user ${user.id}:`, idpError);
         // Best effort: log but succeed domain reactivation
       }
     }

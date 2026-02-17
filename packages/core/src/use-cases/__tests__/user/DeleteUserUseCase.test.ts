@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
-import type { IUserRepository, IEventPublisher } from "@repo/infra";
+import type {
+  IUserRepository,
+  IEventPublisher,
+  IIdentityProviderAdmin,
+} from "@repo/infra";
 import { USER_DELETED } from "@repo/shared";
 import { DeleteUserUseCase } from "../../user";
-import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 function makeRepo(): Mocked<IUserRepository> {
   return {
@@ -22,18 +25,26 @@ function makeEvents(): Mocked<IEventPublisher> {
   } as unknown as Mocked<IEventPublisher>;
 }
 
+function makeIdentityProvider(): Mocked<IIdentityProviderAdmin> {
+  return {
+    disableUser: vi.fn(),
+    enableUser: vi.fn(),
+    updateUser: vi.fn(),
+  } as unknown as Mocked<IIdentityProviderAdmin>;
+}
+
 describe("DeleteUserUseCase", () => {
   let repo: Mocked<IUserRepository>;
   let events: Mocked<IEventPublisher>;
   let uc: DeleteUserUseCase;
-  let kcAdmin: Mocked<KcAdminClient>;
+  let identityProvider: Mocked<IIdentityProviderAdmin>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     repo = makeRepo();
     events = makeEvents();
-    kcAdmin = new KcAdminClient() as unknown as Mocked<KcAdminClient>;
-    uc = new DeleteUserUseCase(repo, events, kcAdmin);
+    identityProvider = makeIdentityProvider();
+    uc = new DeleteUserUseCase(repo, events, identityProvider);
   });
 
   it("soft-deletes by default and publishes USER_DELETED with ISO timestamp", async () => {

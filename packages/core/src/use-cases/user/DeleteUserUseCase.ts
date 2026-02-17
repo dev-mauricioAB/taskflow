@@ -1,6 +1,10 @@
-import { DomainError, IEventPublisher, IUserRepository } from "@repo/infra";
+import {
+  DomainError,
+  IEventPublisher,
+  IIdentityProviderAdmin,
+  IUserRepository,
+} from "@repo/infra";
 import { USER_DELETED } from "@repo/shared";
-import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 type DeleteInput = { userId: string; hard?: boolean };
 
@@ -8,7 +12,7 @@ export class DeleteUserUseCase {
   constructor(
     private readonly users: IUserRepository,
     private readonly events: IEventPublisher,
-    private readonly kcAdmin: KcAdminClient,
+    private readonly identityProvider: IIdentityProviderAdmin,
   ) {}
 
   async execute({ userId, hard = false }: DeleteInput): Promise<void> {
@@ -27,13 +31,10 @@ export class DeleteUserUseCase {
       // Fetch user to get keycloakUserId (add findById to repo if needed)
       const user = await this.users.findById(userId);
       if (user?.keycloakUserId) {
-        await this.kcAdmin.users.update(
-          { id: user.keycloakUserId },
-          { enabled: false }, // Disable preserves audit/sessions
-        );
+        await this.identityProvider.disableUser(user.keycloakUserId);
       }
-    } catch (kcError) {
-      console.error(`Keycloak disable failed for user ${userId}:`, kcError);
+    } catch (idpError) {
+      console.error(`Identity provider disable failed for user ${userId}:`, idpError);
       // Best effort: log but don't fail domain delete
     }
 

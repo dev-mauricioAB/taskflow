@@ -8,7 +8,12 @@ import {
   ReactivateUserUseCase,
   UpdateUserUseCase,
 } from "@repo/core";
-import { DomainError, eventBusPublisher, UserRepository } from "@repo/infra";
+import {
+  DomainError,
+  eventBusPublisher,
+  KeycloakIdentityProviderAdmin,
+  UserRepository,
+} from "@repo/infra";
 import {
   TUpdateUserDto,
   TUserParamsDto,
@@ -21,6 +26,7 @@ import { authKeycloakAdmin, kcAdmin } from "../config/keycloak-admin";
 
 export class UserController {
   private userRepo = new UserRepository();
+  private identityProvider = new KeycloakIdentityProviderAdmin(kcAdmin);
 
   // Commands (publish events)
   private createUserUC = new CreateUserUseCase(
@@ -30,16 +36,19 @@ export class UserController {
   private deleteUserUC = new DeleteUserUseCase(
     this.userRepo,
     eventBusPublisher,
-    kcAdmin,
+    this.identityProvider,
   );
   private updateUserUC = new UpdateUserUseCase(
     this.userRepo,
     eventBusPublisher,
-    kcAdmin,
+    this.identityProvider,
   );
 
   // Queries (no events)
-  private reactivateUserUC = new ReactivateUserUseCase(this.userRepo, kcAdmin);
+  private reactivateUserUC = new ReactivateUserUseCase(
+    this.userRepo,
+    this.identityProvider,
+  );
   private getUsersOffsetUC = new GetUsersOffsetUseCase(this.userRepo);
   private getUsersCursorUC = new GetUsersCursorUseCase(this.userRepo);
   private getUserByIdUC = new GetUserByIdUseCase(this.userRepo);

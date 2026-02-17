@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
-import type { IUserRepository } from "@repo/infra";
+import type { IUserRepository, IIdentityProviderAdmin } from "@repo/infra";
 import type { User } from "@repo/shared";
 import { ReactivateUserUseCase } from "../../user";
-import KcAdminClient from "@keycloak/keycloak-admin-client";
 
 function makeRepo(): Mocked<IUserRepository> {
   return {
@@ -18,16 +17,24 @@ function makeRepo(): Mocked<IUserRepository> {
   } as unknown as Mocked<IUserRepository>;
 }
 
+function makeIdentityProvider(): Mocked<IIdentityProviderAdmin> {
+  return {
+    disableUser: vi.fn(),
+    enableUser: vi.fn(),
+    updateUser: vi.fn(),
+  } as unknown as Mocked<IIdentityProviderAdmin>;
+}
+
 describe("ReactivateUserUseCase", () => {
   let repo: Mocked<IUserRepository>;
   let uc: ReactivateUserUseCase;
-  let kcAdmin: Mocked<KcAdminClient>;
+  let identityProvider: Mocked<IIdentityProviderAdmin>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     repo = makeRepo();
-    kcAdmin = new KcAdminClient() as unknown as Mocked<KcAdminClient>;
-    uc = new ReactivateUserUseCase(repo, kcAdmin);
+    identityProvider = makeIdentityProvider();
+    uc = new ReactivateUserUseCase(repo, identityProvider);
   });
 
   it("normalizes email (trim + lowercase) and reactivates by found user id", async () => {
