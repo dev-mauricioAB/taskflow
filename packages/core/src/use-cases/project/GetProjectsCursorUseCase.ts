@@ -1,9 +1,9 @@
 // @repo/core/projects/use-cases/GetProjectsCursorUseCase.ts
-import { ProjectRepository } from "@repo/infra";
+import { IProjectRepository } from "@repo/infra";
 import { TProjectCursorPagination } from "@repo/shared";
 
 export class GetProjectsCursorUseCase {
-  constructor(private readonly repo: ProjectRepository) {}
+  constructor(private readonly repo: IProjectRepository) {}
 
   async execute(input: TProjectCursorPagination) {
     // Signed take already coerced and bounded by your DTO; still clamp defensively

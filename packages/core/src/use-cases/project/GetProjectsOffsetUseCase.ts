@@ -1,8 +1,8 @@
-import { ProjectRepository } from "@repo/infra";
+import { IProjectRepository } from "@repo/infra";
 import { TProjectOffsetPagination } from "@repo/shared";
 
 export class GetProjectsOffsetUseCase {
-  constructor(private readonly repo: ProjectRepository) {}
+  constructor(private readonly repo: IProjectRepository) {}
 
   async execute(input: TProjectOffsetPagination) {
     const limit =

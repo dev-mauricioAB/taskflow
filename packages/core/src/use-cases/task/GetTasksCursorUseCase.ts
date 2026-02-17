@@ -1,8 +1,8 @@
-import { TaskRepository } from "@repo/infra";
+import { ITaskRepository } from "@repo/infra";
 import { TTaskCursorPagination } from "@repo/shared";
 
 export class GetTasksCursorUseCase {
-  constructor(private readonly repo: TaskRepository) {}
+  constructor(private readonly repo: ITaskRepository) {}
 
   async execute(input: TTaskCursorPagination) {
     const take =

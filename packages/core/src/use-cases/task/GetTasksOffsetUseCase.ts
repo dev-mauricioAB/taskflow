@@ -1,8 +1,8 @@
-import { TaskRepository } from "@repo/infra";
+import { ITaskRepository } from "@repo/infra";
 import { TTaskOffsetPagination } from "@repo/shared";
 
 export class GetTasksOffsetUseCase {
-  constructor(private readonly repo: TaskRepository) {}
+  constructor(private readonly repo: ITaskRepository) {}
 
   async execute(input: TTaskOffsetPagination) {
     const limit = typeof input.limit === "number" ? input.limit : 20;

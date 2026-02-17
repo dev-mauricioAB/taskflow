@@ -1,8 +1,8 @@
-import { UserRepository } from "@repo/infra";
+import { IUserRepository } from "@repo/infra";
 import { TUserCursorPagination } from "@repo/shared";
 
 export class GetUsersCursorUseCase {
-  constructor(private readonly repo: UserRepository) {}
+  constructor(private readonly repo: IUserRepository) {}
 
   async execute(input: TUserCursorPagination) {
     const take =

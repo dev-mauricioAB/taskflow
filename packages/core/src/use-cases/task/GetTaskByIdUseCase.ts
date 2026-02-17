@@ -1,9 +1,9 @@
 // @repo/core/tasks/use-cases/GetTaskByIdUseCase.ts
-import { DomainError, TaskRepository } from "@repo/infra";
+import { DomainError, ITaskRepository } from "@repo/infra";
 import { TTaskParamsDto } from "@repo/shared";
 
 export class GetTaskByIdUseCase {
-  constructor(private readonly repo: TaskRepository) {}
+  constructor(private readonly repo: ITaskRepository) {}
   async execute(params: TTaskParamsDto) {
     const task = await this.repo.findById(params.id);
 

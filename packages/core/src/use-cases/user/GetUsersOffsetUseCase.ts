@@ -1,8 +1,8 @@
-import { UserRepository } from "@repo/infra";
+import { IUserRepository } from "@repo/infra";
 import { TUserOffsetPagination } from "@repo/shared";
 
 export class GetUsersOffsetUseCase {
-  constructor(private readonly repo: UserRepository) {}
+  constructor(private readonly repo: IUserRepository) {}
 
   async execute(input: TUserOffsetPagination) {
     const limit =

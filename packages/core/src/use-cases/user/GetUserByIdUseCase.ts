@@ -1,9 +1,9 @@
 // @repo/core/users/use-cases/GetUserByIdUseCase.ts
-import { UserRepository } from "@repo/infra";
+import { IUserRepository } from "@repo/infra";
 import { TUserParamsDto } from "@repo/shared";
 
 export class GetUserByIdUseCase {
-  constructor(private readonly repo: UserRepository) {}
+  constructor(private readonly repo: IUserRepository) {}
 
   async execute(params: TUserParamsDto) {
     return this.repo.findById(params.id);
