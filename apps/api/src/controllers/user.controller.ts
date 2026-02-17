@@ -22,6 +22,7 @@ import {
   TUserCursorPagination,
   TUserOffsetPagination,
   TCreateKeycloakUserDto,
+  TReactivateUserDto,
 } from "@repo/shared";
 import { authKeycloakAdmin, kcAdmin } from "../config/keycloak-admin";
 
@@ -178,21 +179,12 @@ export class UserController {
 
   // POST /users/reactivate
   async reactivate(
-    req: Request<{}, {}, TUpdateUserDto>,
+    req: Request<{}, {}, TReactivateUserDto>,
     res: Response,
     next: NextFunction,
   ) {
     try {
       const { email } = req.body;
-
-      if (!email) {
-        return next(
-          new DomainError({
-            code: "VALIDATION_FAILED",
-            message: "Email is required for reactivation",
-          }),
-        );
-      }
 
       await authKeycloakAdmin();
       // Note: in a real app, verify email ownership (OTP/magic link) before reactivation.

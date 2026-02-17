@@ -30,8 +30,15 @@ export const UserQueryDto = z
     q: z.string().trim().optional(),
   })
   .strict();
+  export const ReactivateUserDto = z
+  .object({
+    email: UserSchema.shape.email,  // Reuses your email validation (required by default)
+  })
+  .strict();
+
 
 export type TCreateUserDto = z.infer<typeof CreateUserDto>;
 export type TUpdateUserDto = z.infer<typeof UpdateUserDto>;
 export type TUserParamsDto = z.infer<typeof UserParamsDto>;
 export type TUserQueryDto = z.infer<typeof UserQueryDto>;
+export type TReactivateUserDto = z.infer<typeof ReactivateUserDto>;
