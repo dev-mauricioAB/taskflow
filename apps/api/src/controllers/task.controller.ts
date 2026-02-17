@@ -24,7 +24,7 @@ import {
 export class TaskController {
   private taskRepo = new TaskRepository();
   // Commands (events published inside use cases)
-  private createTaskEC = new CreateTaskUseCase(
+  private createTaskUC = new CreateTaskUseCase(
     this.taskRepo,
     eventBusPublisher,
   );
@@ -53,7 +53,7 @@ export class TaskController {
     next: NextFunction,
   ) {
     try {
-      const created = await this.createTaskEC.execute(req.body);
+      const created = await this.createTaskUC.execute(req.body);
       return res.status(201).json(created);
     } catch (err) {
       return next(err);
