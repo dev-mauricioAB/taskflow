@@ -34,7 +34,10 @@ export class DeleteUserUseCase {
         await this.identityProvider.disableUser(user.keycloakUserId);
       }
     } catch (idpError) {
-      console.error(`Identity provider disable failed for user ${userId}:`, idpError);
+      console.error(
+        `Identity provider disable failed for user ${userId}:`,
+        idpError,
+      );
       // Best effort: log but don't fail domain delete
     }
 

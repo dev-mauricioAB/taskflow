@@ -29,7 +29,10 @@ export class ReactivateUserUseCase {
       try {
         await this.identityProvider.enableUser(reactivated.keycloakUserId);
       } catch (idpError) {
-        console.error(`Identity provider enable failed for user ${user.id}:`, idpError);
+        console.error(
+          `Identity provider enable failed for user ${user.id}:`,
+          idpError,
+        );
         // Best effort: log but succeed domain reactivation
       }
     }

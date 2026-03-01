@@ -38,17 +38,11 @@ export class KeycloakIdentityProviderAdmin
   }
 
   async disableUser(externalUserId: string): Promise<void> {
-    await this.kcAdmin.users.update(
-      { id: externalUserId },
-      { enabled: false },
-    );
+    await this.kcAdmin.users.update({ id: externalUserId }, { enabled: false });
   }
 
   async enableUser(externalUserId: string): Promise<void> {
-    await this.kcAdmin.users.update(
-      { id: externalUserId },
-      { enabled: true },
-    );
+    await this.kcAdmin.users.update({ id: externalUserId }, { enabled: true });
   }
 
   async updateUser(

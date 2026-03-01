@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mocked } from "vitest";
 import type { IIdentityProviderCreateUser } from "@repo/infra";
 import type { User } from "@repo/shared";
-import {
-  CreateUserWithKeycloakUseCase,
-  CreateUserUseCase,
-} from "../../user";
+import { CreateUserWithKeycloakUseCase, CreateUserUseCase } from "../../user";
 
 function makeIdpCreate(): Mocked<IIdentityProviderCreateUser> {
   return {

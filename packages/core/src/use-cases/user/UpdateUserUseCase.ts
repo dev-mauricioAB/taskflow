@@ -95,7 +95,10 @@ export class UpdateUserUseCase {
           );
         }
       } catch (idpError) {
-        console.error(`Identity provider sync failed for user ${userId}:`, idpError);
+        console.error(
+          `Identity provider sync failed for user ${userId}:`,
+          idpError,
+        );
         // Best effort: log but don't fail local update
       }
     }
