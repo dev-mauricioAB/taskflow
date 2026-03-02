@@ -53,7 +53,10 @@ export class TaskController {
     next: NextFunction,
   ) {
     try {
-      const created = await this.createTaskUC.execute(req.body);
+      const created = await this.createTaskUC.execute({
+        ...req.body,
+        userId: req.authUser!.id,
+      });
       return res.status(201).json(created);
     } catch (err) {
       return next(err);
@@ -67,7 +70,10 @@ export class TaskController {
     next: NextFunction,
   ) {
     try {
-      const page = await this.getTasksOffsetUC.execute(req.query);
+      const page = await this.getTasksOffsetUC.execute({
+        ...req.query,
+        userId: req.authUser!.id,
+      });
       return res.status(200).json(page);
     } catch (err) {
       return next(err);
@@ -82,7 +88,10 @@ export class TaskController {
   ) {
     try {
       const page: CursorPage<Task, CursorSortBy> =
-        await this.getTasksCursorUC.execute(req.query);
+        await this.getTasksCursorUC.execute({
+          ...req.query,
+          userId: req.query.userId || undefined,
+        });
       return res.status(200).json(page);
     } catch (err) {
       return next(err);

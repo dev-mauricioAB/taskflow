@@ -12,6 +12,7 @@ import {
   UserCursorPaginationDto,
   UserOffsetPaginationDto,
   UserParamsDto,
+  TReactivateUserDto,
 } from "@repo/shared";
 import {
   withParamsAndBody,
@@ -81,7 +82,7 @@ userRouter.delete(
 userRouter.post(
   "/:id/reactivate",
   validate({ params: UserParamsDto }),
-  withParams<TUserParamsDto>((req, res, next) =>
+  withBody<TReactivateUserDto>((req, res, next) =>
     controller.reactivate(req, res, next),
   ),
 );

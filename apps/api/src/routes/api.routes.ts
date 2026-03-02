@@ -8,6 +8,7 @@ import { validate } from "../infra/http/middlewares/validate-request.middleware"
 import { CreateKeycloakUserDto, TCreateKeycloakUserDto } from "@repo/shared";
 import { withBody } from "../utils/typed-route";
 import { UserController } from "../controllers/user.controller";
+import { extractAuthUser } from "../infra/http/middlewares/auth.middleware";
 
 const apiRouter = Router();
 const userController = new UserController();
@@ -21,8 +22,10 @@ apiRouter.post(
   ),
 );
 
-// middleware applied to everything under /api
-apiRouter.use(protect());
+// Every protected route gets both middlewares:
+// protect()       → validates the Keycloak token
+// extractAuthUser → pulls sub into req.authUser
+apiRouter.use(protect(), extractAuthUser);
 
 // resource routers
 apiRouter.use("/tasks", taskRouter);

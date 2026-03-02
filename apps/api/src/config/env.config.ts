@@ -7,7 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  DATABASE_URL: z.string(), // keep as string; some drivers dislike strict URL parsing [web:54]
+  DATABASE_URL: z.string(),
   PORT: z.string().default("8080"),
 
   // Keycloak
