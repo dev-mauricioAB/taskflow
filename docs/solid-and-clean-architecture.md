@@ -53,12 +53,12 @@ So: **application (core) depends on ports (interfaces)**, not on HTTP or the dat
 
 ### Layers and where they live
 
-| Layer | Location | Role |
-| ------- | ---------- | ------ |
-| **Entities / shared types** | `packages/shared` (entities, types, DTOs, events) | Domain shapes and API contracts; no framework. |
-| **Use cases (application)** | `packages/core` (use-cases, subscribers) | Orchestrate repositories and events; depend only on interfaces. |
-| **Interface adapters** | `apps/api` (controllers, routes, middlewares) | Translate HTTP ↔ use cases. |
-| **Infrastructure** | `packages/infra` (repositories, Prisma, event bus) | Implement persistence and event publishing. |
+| Layer                       | Location                                           | Role                                                            |
+| --------------------------- | -------------------------------------------------- | --------------------------------------------------------------- |
+| **Entities / shared types** | `packages/shared` (entities, types, DTOs, events)  | Domain shapes and API contracts; no framework.                  |
+| **Use cases (application)** | `packages/core` (use-cases, subscribers)           | Orchestrate repositories and events; depend only on interfaces. |
+| **Interface adapters**      | `apps/api` (controllers, routes, middlewares)      | Translate HTTP ↔ use cases.                                    |
+| **Infrastructure**          | `packages/infra` (repositories, Prisma, event bus) | Implement persistence and event publishing.                     |
 
 **Entities** are plain types used across layers. Example:
 
@@ -130,7 +130,11 @@ export function validate(schemas: Schemas) {
     params: schemas.params ?? z.any(),
   });
   return async (req, _res, next) => {
-    const parsed = await wrapper.parseAsync({ body: req.body, query: req.query, params: req.params });
+    const parsed = await wrapper.parseAsync({
+      body: req.body,
+      query: req.query,
+      params: req.params,
+    });
     // assign parsed back to req; on ZodError → DomainError(VALIDATION_FAILED)
   };
 }
@@ -151,8 +155,12 @@ Open for extension, closed for modification: add new behavior by adding new code
 ```typescript
 // packages/infra/src/interfaces/IUserRepository.ts
 export interface IUserRepository extends IRepository<User, string> {
-  findAll(params: OffsetListParams<UserSortBy>): Promise<OffsetPage<User, UserSortBy>>;
-  findAllCursor(params: CursorListParams<CursorSortBy>): Promise<CursorPage<User, CursorSortBy>>;
+  findAll(
+    params: OffsetListParams<UserSortBy>,
+  ): Promise<OffsetPage<User, UserSortBy>>;
+  findAllCursor(
+    params: CursorListParams<CursorSortBy>,
+  ): Promise<CursorPage<User, CursorSortBy>>;
   reactivate(userId: string): Promise<User>;
   findByEmail(email: string): Promise<User | null>;
 }
@@ -172,7 +180,10 @@ Any implementation of an interface can replace another without breaking callers.
 // apps/api/src/controllers/user.controller.ts (excerpt)
 export class UserController {
   private userRepo = new UserRepository();
-  private createUserUC = new CreateUserUseCase(this.userRepo, eventBusPublisher);
+  private createUserUC = new CreateUserUseCase(
+    this.userRepo,
+    eventBusPublisher,
+  );
   // ...
 }
 ```
@@ -212,8 +223,12 @@ Clients should not depend on interfaces they do not use. We have small, focused 
 ```typescript
 // packages/infra/src/interfaces/IUserRepository.ts
 export interface IUserRepository extends IRepository<User, string> {
-  findAll(params: OffsetListParams<UserSortBy>): Promise<OffsetPage<User, UserSortBy>>;
-  findAllCursor(params: CursorListParams<CursorSortBy>): Promise<CursorPage<User, CursorSortBy>>;
+  findAll(
+    params: OffsetListParams<UserSortBy>,
+  ): Promise<OffsetPage<User, UserSortBy>>;
+  findAllCursor(
+    params: CursorListParams<CursorSortBy>,
+  ): Promise<CursorPage<User, CursorSortBy>>;
   reactivate(userId: string): Promise<User>;
   findByEmail(email: string): Promise<User | null>;
 }
@@ -254,13 +269,13 @@ So the dependency direction is: **Core → interfaces (in infra) ← implementat
 
 ## Summary table
 
-| Principle | Where it shows in TaskFlow |
-| ----------- | ---------------------------- |
-| **Clean Architecture – dependency rule** | Core has no Prisma/Express; use cases depend on `IUserRepository`, `IEventPublisher` from infra. |
-| **SRP** | Controller = HTTP only; use case = one action; repository = persistence for one aggregate; validation = one middleware. |
-| **OCP** | New use cases and new repository implementations without changing existing use cases or interfaces. |
-| **LSP** | Real `UserRepository` and mock `Mocked<IUserRepository>` are interchangeable in `CreateUserUseCase`. |
-| **ISP** | Small interfaces: `IUserRepository`, `IEventPublisher`, generic `IRepository<T, ID>`. |
-| **DIP** | Use cases depend on interfaces; API app injects concrete repository and event publisher. |
+| Principle                                | Where it shows in TaskFlow                                                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Clean Architecture – dependency rule** | Core has no Prisma/Express; use cases depend on `IUserRepository`, `IEventPublisher` from infra.                        |
+| **SRP**                                  | Controller = HTTP only; use case = one action; repository = persistence for one aggregate; validation = one middleware. |
+| **OCP**                                  | New use cases and new repository implementations without changing existing use cases or interfaces.                     |
+| **LSP**                                  | Real `UserRepository` and mock `Mocked<IUserRepository>` are interchangeable in `CreateUserUseCase`.                    |
+| **ISP**                                  | Small interfaces: `IUserRepository`, `IEventPublisher`, generic `IRepository<T, ID>`.                                   |
+| **DIP**                                  | Use cases depend on interfaces; API app injects concrete repository and event publisher.                                |
 
 Together, these choices keep the codebase testable (mocks), flexible (new implementations and new use cases without touching existing code), and aligned with Clean Architecture’s dependency rule and layering.

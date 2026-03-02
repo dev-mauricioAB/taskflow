@@ -14,14 +14,14 @@ TaskFlow is a full-stack monorepo productivity platform built with Next.js and E
 
 ## Documentation index
 
-| Document | Description |
-| ---------- | ------------- |
-| [Architecture](architecture.md) | High-level architecture, layers, dependency rule, request path |
-| [Data flow](data-flow.md) | End-to-end flow: HTTP → validation → use case → DB and events |
-| [Monorepo](monorepo.md) | Workspaces, packages, build order, key paths, scripts |
-| [Backend stack](backend-stack.md) | API app: routes, controllers, middlewares, config |
-| [Core package](core-package.md) | Use cases, subscribers, and how they use ports |
-| [Infra package](infra-package.md) | Repositories, interfaces, Prisma, event bus, errors |
-| [Shared package](shared-package.md) | DTOs, Zod schemas, entities, events, shared types |
-| [Design patterns](design-patterns.md) | Repository, use case, DI, adapters, SOLID, Clean Code |
+| Document                                                        | Description                                                                |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [Architecture](architecture.md)                                 | High-level architecture, layers, dependency rule, request path             |
+| [Data flow](data-flow.md)                                       | End-to-end flow: HTTP → validation → use case → DB and events              |
+| [Monorepo](monorepo.md)                                         | Workspaces, packages, build order, key paths, scripts                      |
+| [Backend stack](backend-stack.md)                               | API app: routes, controllers, middlewares, config                          |
+| [Core package](core-package.md)                                 | Use cases, subscribers, and how they use ports                             |
+| [Infra package](infra-package.md)                               | Repositories, interfaces, Prisma, event bus, errors                        |
+| [Shared package](shared-package.md)                             | DTOs, Zod schemas, entities, events, shared types                          |
+| [Design patterns](design-patterns.md)                           | Repository, use case, DI, adapters, SOLID, Clean Code                      |
 | [SOLID and Clean Architecture](solid-and-clean-architecture.md) | How SOLID and Clean Architecture are applied, with workspace code examples |

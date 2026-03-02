@@ -6,12 +6,12 @@ This document describes the high-level architecture of TaskFlow: layers, depende
 
 The backend adheres to Clean Architecture's concentric layers, ensuring the domain remains pristine and testable.
 
-| Layer | Location | Responsibility |
-| :-- | :-- | :-- |
-| **Presentation** | `apps/api`: routes, controllers, middlewares | HTTP in/out, validation at the edge, no business logic |
-| **Application** | `packages/core`: use cases, subscribers | Orchestrate repositories and events; one use case per action |
-| **Domain** | `packages/shared`: entities, types; `packages/infra`: interfaces (ports) | Entity shapes, list/sort types, repository and event publisher contracts |
-| **Infrastructure** | `packages/infra`: repositories, Prisma, event bus, errors | Implement persistence (Prisma), publish/subscribe, domain errors |
+| Layer              | Location                                                                 | Responsibility                                                           |
+| :----------------- | :----------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| **Presentation**   | `apps/api`: routes, controllers, middlewares                             | HTTP in/out, validation at the edge, no business logic                   |
+| **Application**    | `packages/core`: use cases, subscribers                                  | Orchestrate repositories and events; one use case per action             |
+| **Domain**         | `packages/shared`: entities, types; `packages/infra`: interfaces (ports) | Entity shapes, list/sort types, repository and event publisher contracts |
+| **Infrastructure** | `packages/infra`: repositories, Prisma, event bus, errors                | Implement persistence (Prisma), publish/subscribe, domain errors         |
 
 **Presentation** (`apps/api`) handles HTTP concerns exclusively—routes mount endpoints, controllers orchestrate calls without leaking business rules (Single Responsibility Principle, SRP), and Zod-powered middlewares validate inputs at the boundary, preventing invalid states from propagating inward.
 
@@ -66,13 +66,13 @@ Error handling shines: infra maps Prisma errors to domain ones, bubbling intent 
 
 ## SOLID in Action
 
-| Principle | Implementation Example | Benefit |
-| :-- | :-- | :-- |
-| **SRP (Single Responsibility Principle)** | One use case per file/action; controllers only map HTTP. | Easy unit tests, no god classes. |
-| **OCP (Open-Closed Principle)** | Event bus interface; swap in-memory for RabbitMQ. | Extend without modifying core. |
-| **LSP (Liskov Substitution Principle)** | Repos implement typed interfaces; no surprises in subtypes. | Polymorphic swaps (e.g., mock repos). |
-| **ISP (Interface Segregation Principle)** | Narrow ports like `IUserRepository` (no bloat). | Clients depend only on needs. |
-| **DIP (Dependency Inversion Principle)** | Core uses abstractions; infra depends on domain ports. | Tech-agnostic business logic. |
+| Principle                                 | Implementation Example                                      | Benefit                               |
+| :---------------------------------------- | :---------------------------------------------------------- | :------------------------------------ |
+| **SRP (Single Responsibility Principle)** | One use case per file/action; controllers only map HTTP.    | Easy unit tests, no god classes.      |
+| **OCP (Open-Closed Principle)**           | Event bus interface; swap in-memory for RabbitMQ.           | Extend without modifying core.        |
+| **LSP (Liskov Substitution Principle)**   | Repos implement typed interfaces; no surprises in subtypes. | Polymorphic swaps (e.g., mock repos). |
+| **ISP (Interface Segregation Principle)** | Narrow ports like `IUserRepository` (no bloat).             | Clients depend only on needs.         |
+| **DIP (Dependency Inversion Principle)**  | Core uses abstractions; infra depends on domain ports.      | Tech-agnostic business logic.         |
 
 ## Dependency Rule
 

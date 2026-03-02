@@ -41,13 +41,13 @@ Domain and application (core) sit in the center; adapters depend inward on ports
 
 ## SOLID
 
-| Principle | How it shows up |
-| ----------- | ------------------ |
-| **SRP (Single Responsibility)** | Controllers only do HTTP in/out. Use cases only orchestrate one action. Repositories only do persistence for one aggregate. Validation is at the edge (middleware). |
-| **OCP (Open/Closed)** | New behavior = new use cases and new routes; existing use cases and repository interfaces stay unchanged. New repositories (e.g. a new storage backend) implement existing interfaces. |
-| **LSP (Liskov Substitution)** | Any implementation of `IUserRepository` can replace another (e.g. Prisma impl vs mock) without breaking use cases. |
-| **ISP (Interface Segregation)** | Interfaces are per aggregate and per concern (e.g. `IUserRepository` with user-specific methods; `IEventPublisher` only for publishing). No fat interfaces. |
-| **DIP (Dependency Inversion)** | Core depends on abstractions in infra (`IUserRepository`, `IEventPublisher`), not on Prisma or Express. Infra implements those abstractions. |
+| Principle                       | How it shows up                                                                                                                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SRP (Single Responsibility)** | Controllers only do HTTP in/out. Use cases only orchestrate one action. Repositories only do persistence for one aggregate. Validation is at the edge (middleware).                    |
+| **OCP (Open/Closed)**           | New behavior = new use cases and new routes; existing use cases and repository interfaces stay unchanged. New repositories (e.g. a new storage backend) implement existing interfaces. |
+| **LSP (Liskov Substitution)**   | Any implementation of `IUserRepository` can replace another (e.g. Prisma impl vs mock) without breaking use cases.                                                                     |
+| **ISP (Interface Segregation)** | Interfaces are per aggregate and per concern (e.g. `IUserRepository` with user-specific methods; `IEventPublisher` only for publishing). No fat interfaces.                            |
+| **DIP (Dependency Inversion)**  | Core depends on abstractions in infra (`IUserRepository`, `IEventPublisher`), not on Prisma or Express. Infra implements those abstractions.                                           |
 
 ## Clean Code–oriented choices
 
