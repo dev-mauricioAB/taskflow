@@ -7,6 +7,7 @@ export const ERROR_CODES = {
   RATE_LIMITED: "RATE_LIMITED",
   EMAIL_IN_USE: "EMAIL_IN_USE",
   INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+  UNAUTHORIZED: "UNAUTHORIZED",
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

@@ -1,3 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 
-export const prisma = new PrismaClient();
+const enableQueryLogs = process.env.PRISMA_EVENT_QUERY !== "false";
+
+export const prisma = new PrismaClient({
+  log: enableQueryLogs
+    ? [{ level: 'query', emit: 'event' }]
+    : [],
+});
+

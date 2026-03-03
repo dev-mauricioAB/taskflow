@@ -6,15 +6,21 @@ import {
   OffsetListParams,
   OffsetPage,
   Task,
+  taskWithRelations,
   TaskSortBy,
   TCreateTaskDto,
   TUpdateTaskDto,
+  DEFAULT_PAGE_LIMIT,
+  DEFAULT_OFFSET,
+  DEFAULT_SORT_BY_TASK,
+  DEFAULT_SORT_DIR,
 } from "@repo/shared";
 import { ITaskRepository } from "../interfaces/ITaskRepository";
 import { NewEntity } from "../interfaces";
 import { DomainError } from "../errors";
 import { HandleAllPrismaErrors } from "../database/decorators/handle-prisma-errors";
 import { buildTaskWhere, TaskFilters } from "./helpers";
+import { toTask } from "./mappers";
 
 @HandleAllPrismaErrors
 export class TaskRepository implements ITaskRepository {
@@ -43,27 +49,25 @@ export class TaskRepository implements ITaskRepository {
   }
 
   async findByProjectId(projectId: string): Promise<Task[]> {
-    return prisma.task.findMany({ where: { projectId } });
+    return prisma.task.findMany({ where: { projectId }, ...taskWithRelations });
   }
 
   async create(dto: TCreateTaskDto): Promise<Task> {
-    const user = await prisma.user.findUnique({ where: { id: dto.userId } });
-    if (!user) {
+    const [user, project] = await Promise.all([
+      prisma.user.findUnique({ where: { id: dto.userId } }),
+      prisma.project.findUnique({ where: { id: dto.projectId } }),
+    ]);
+
+    if (!user)
       throw new DomainError({
         code: "NOT_FOUND",
         message: "Owner user not found",
       });
-    }
-
-    const project = await prisma.project.findUnique({
-      where: { id: dto.projectId },
-    });
-    if (!project) {
+    if (!project)
       throw new DomainError({
         code: "NOT_FOUND",
         message: "Project not found",
       });
-    }
 
     const data: NewEntity<Task> = {
       title: dto.title.trim(),
@@ -85,10 +89,10 @@ export class TaskRepository implements ITaskRepository {
       userId,
       status,
       includeDeleted = false,
-      limit = 20,
-      offset = 0,
-      sortBy = "createdAt",
-      sortDir = "desc",
+      limit = DEFAULT_PAGE_LIMIT,
+      offset = DEFAULT_OFFSET,
+      sortBy = DEFAULT_SORT_BY_TASK,
+      sortDir = DEFAULT_SORT_DIR,
     } = params;
 
     const where = buildTaskWhere({
@@ -99,15 +103,18 @@ export class TaskRepository implements ITaskRepository {
       includeDeleted,
     });
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.task.findMany({
         where,
         orderBy: { [sortBy]: sortDir },
         skip: offset,
         take: limit,
+        ...taskWithRelations,
       }),
       prisma.task.count({ where }),
     ]);
+
+    const data: Task[] = rows.map(toTask);
 
     return { data, total, limit, offset, sortBy, sortDir };
   }
@@ -189,22 +196,21 @@ export class TaskRepository implements ITaskRepository {
   }
 
   async update(taskId: string, dto: TUpdateTaskDto): Promise<TUpdateTaskDto> {
-    const ui = await prisma.user.findUnique({ where: { id: dto.userId } });
-    if (!ui) {
+    const [user, project] = await Promise.all([
+      prisma.user.findUnique({ where: { id: dto.userId } }),
+      prisma.project.findUnique({ where: { id: dto.projectId } }),
+    ]);
+
+    if (!user)
       throw new DomainError({
         code: "NOT_FOUND",
-        message: "User not found",
+        message: "Owner user not found",
       });
-    }
-    const pj = await prisma.project.findUnique({
-      where: { id: dto.projectId },
-    });
-    if (!pj) {
+    if (!project)
       throw new DomainError({
         code: "NOT_FOUND",
         message: "Project not found",
       });
-    }
 
     const updated = await prisma.task.update({
       where: { id: taskId },

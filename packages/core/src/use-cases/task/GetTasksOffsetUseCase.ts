@@ -1,17 +1,29 @@
 import { ITaskRepository } from "@repo/infra";
-import { TTaskOffsetPagination } from "@repo/shared";
+import {
+  DEFAULT_OFFSET,
+  DEFAULT_PAGE_LIMIT,
+  DEFAULT_SORT_BY_TASK,
+  DEFAULT_SORT_DIR,
+  TTaskOffsetPagination,
+} from "@repo/shared";
 
 export class GetTasksOffsetUseCase {
   constructor(private readonly repo: ITaskRepository) {}
 
   async execute(input: TTaskOffsetPagination) {
-    const limit = typeof input.limit === "number" ? input.limit : 20;
-    const offset = typeof input.offset === "number" ? input.offset : 0;
+    const limit =
+      typeof input.limit === "string"
+        ? parseInt(input.limit, 10)
+        : (input.limit ?? DEFAULT_PAGE_LIMIT);
+    const offset =
+      typeof input.offset === "string"
+        ? parseInt(input.offset, 10)
+        : (input.offset ?? DEFAULT_OFFSET);
     const sortDir =
       input.sortDir === "asc" || input.sortDir === "desc"
         ? input.sortDir
-        : "desc";
-    const sortBy = input.sortBy ?? "createdAt";
+        : DEFAULT_SORT_DIR;
+    const sortBy = input.sortBy ?? DEFAULT_SORT_BY_TASK;
     return this.repo.findAll({
       q: input.q,
       projectId: input.projectId,
